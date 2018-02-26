@@ -1,0 +1,6 @@
+C:\Users\PLDD\Documents\My\HackerRank\WhiteBlack\WhiteBlack\bin\Debug\WhiteBlack.exe.config
+C:\Users\PLDD\Documents\My\HackerRank\WhiteBlack\WhiteBlack\bin\Debug\WhiteBlack.exe
+C:\Users\PLDD\Documents\My\HackerRank\WhiteBlack\WhiteBlack\bin\Debug\WhiteBlack.pdb
+C:\Users\PLDD\Documents\My\HackerRank\WhiteBlack\WhiteBlack\obj\Debug\WhiteBlack.csprojResolveAssemblyReference.cache
+C:\Users\PLDD\Documents\My\HackerRank\WhiteBlack\WhiteBlack\obj\Debug\WhiteBlack.exe
+C:\Users\PLDD\Documents\My\HackerRank\WhiteBlack\WhiteBlack\obj\Debug\WhiteBlack.pdb
