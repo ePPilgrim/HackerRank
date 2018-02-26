@@ -11,41 +11,44 @@ namespace WhiteBlack
     {
         static void Main(string[] args)
         {
-            string str = "WBWB";
-            int k = 2;
+            //            29 28
+            //WBWBWBWBWBWBWBWBWBWBWBWBWBWBW
+            //14.9975369458
+
+            //4 2
+            //WWBW
+            //1.8333333333
+            string str = "WBWBWBWBWBWBWBWBWBWBWBWBWBWBW";
+            int k = 28;
+       
             var solve = new WhiteBlack(str);
-            Console.WriteLine(solve.Solve(solve.InitSeq, k));
+            Console.WriteLine(String.Format("{0:F10}", solve.Solve(solve.InitSeq, k)));
+            Console.WriteLine(solve.Means.Count);
         }
  
     }
 
     public class WhiteBlack
     {
-        public Dictionary<int, double> Means = null;
-        public int InitSeq = 0;
-        int DerSeq(int seq, int pos)
+        public Dictionary<uint, double> Means = null;
+        public uint InitSeq = 0;
+        uint DerSeq(uint seq, int pos)
         {
-            int mask = (1 << pos + 1) - 1;
-            return (seq & mask >> 1) | (seq & ~mask >> 1);   
+            uint mask = (1u << pos + 1) - 1;
+            return (seq & mask >> 1) | (~mask & seq) >> 1;   
         }
 
         public WhiteBlack(string str)
         {
-            Means = new Dictionary<int, double>();
-            for(var i = 0; i < str.Length; ++ i) {if (str[i] == 'W') InitSeq |= 1 << i;}
-            InitSeq |= 1 << str.Length;
+            Means = new Dictionary<uint, double>();
+            for(var i = 0; i < str.Length; ++ i) {if (str[i] == 'W') InitSeq |= 1u << i;}
+            InitSeq |= 1u << str.Length;
         }
 
-        public double Solve(int seq, int k)
+        public double Solve(uint seq, int k)
         {
-            if( k == 0)
-            {
-                return 0;
-            }
-            if(Means.ContainsKey(seq))
-            {
-                return Means[seq];
-            }
+            if (k == 0) return 0;
+            if(Means.ContainsKey(seq)) return Means[seq];
             int n = 31;
             for (; (seq & 1 << n) == 0; n --) ;
             double mean = 0.0;
