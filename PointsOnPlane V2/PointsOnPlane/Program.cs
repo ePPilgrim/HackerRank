@@ -52,6 +52,7 @@ namespace PointsOnPlane
             dp[0, 1] = 1;
             for(int i = 1; i < dp.GetLength(0); ++i)
             {
+                List<int> depth = new List<int>(capacity : 16);
                 for(int j = masks[i,0]; j <= masks[i,1]; j <<= 1)
                 {
                     int seg = lineseg[j | masks[i, 0]] & masks[j | masks[i, 0], 2] & i;
@@ -69,7 +70,7 @@ namespace PointsOnPlane
                 if ((((j1|j2)^j2) == 0) && (dp[i, 0] == minH - 1)) sets.Add(j1);     
             }
 
-            sets.Sort((id1, id2) => fndcnt(id2) - fndcnt(id1));
+            //sets.Sort((id1, id2) => fndcnt(id2) - fndcnt(id1));
         }
 
         private int[] find_solution(int n) {
@@ -98,10 +99,11 @@ namespace PointsOnPlane
                 if (subset != 0)
                     if (dp[set, 0] == dp[subset ^ set, 0] + 1)
                     {
-                        if (fndcnt(max_key) < fndcnt(subset)) max_key = subset;
+                        if (max_key < fndcnt(subset)) max_key = subset;
                         subsets.Add(subset);
                     }
             }
+            
 
             foreach (var subset in subsets) {
                 if(0 == ((subset | max_key)^max_key))
@@ -132,7 +134,7 @@ namespace PointsOnPlane
         private static int[,] init_masks()
         {
             int n = 1 << 16;
-            int[,] _masks = new int[n, 3];
+            int[,] _masks = new int[n, 32];
             for (int i = 1; i < n; ++i)
             {
                 for (int j = 0; (_masks[i, 0] & i) == 0; ++j) _masks[i, 0] = 1 << j;
