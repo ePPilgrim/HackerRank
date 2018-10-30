@@ -1,13 +1,14 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 
 
 namespace PointsOnPlane
 {
     class PointsOnPlane
     {
-        public PointsOnPlane() { fac = init_fac(); masks = init_masks(); }
+        public PointsOnPlane() { fac = init_fac(); masks = init_masks(); vpos = init_vpos(); }
 
         public int[] GetSolution(int[][] points) {
             init_sets(points);
@@ -41,15 +42,14 @@ namespace PointsOnPlane
                 }
             }
 
-            int[] lineseg = new int[1 << n];
             for (int i = 0; i < n; ++i)
-                for (int j = 0; j < n; ++j) {
-                    lineseg[(1 << i) | (1 << j)] = setids[subsets[i, j] - 1];
-                }
-
+                for (int j = 0; j < n; ++j) 
+                    subsets[i,j] = setids[subsets[i, j] - 1];
+                
             dp = new int[1 << n, 2];
             for (int i = 1; i < dp.GetLength(0); ++i) { dp[i, 0] = prime; dp[i, 1] = 0; }
             dp[0, 1] = 1;
+<<<<<<< HEAD
             for(int i = 1; i < dp.GetLength(0); ++i)
             {
                 List<int> depth = new List<int>(capacity : 16);
@@ -57,20 +57,34 @@ namespace PointsOnPlane
                 {
                     int seg = lineseg[j | masks[i, 0]] & masks[j | masks[i, 0], 2] & i;
                     if (dp[i, 0] > dp[i ^ seg, 0] + 1) dp[i, 0] = dp[i ^ seg, 0] + 1;
+=======
+            for(int i = 1; i < dp.GetLength(0); ++i) {
+                var dpv = new List<int>();
+                var posv = vpos[i];
+                var m0 = 1<<posv[0];
+                foreach(var j in posv) {
+                    int seg = i & subsets[posv[0], j] & ((1 << (j + 1)) - 1);
+                    dpv.Add(dp[i ^ seg, 0] + 1);
+>>>>>>> 0e47976f714897b6a48e96f950fabee224ca2074
                 }
+                dp[i, 0] = dpv.Min();
             }
 
+            locmasks = new int[maxlen];
             sets = new List<int>();
             int mask = (1 << n) -1;
             int minH = dp[mask, 0];
-            for(int i = (1 << n) - 2; i >= 0; --i)
+            for(int i = 0; i < mask; i ++)
             {
-                int j1 = (~i) & mask;
-                int j2 = lineseg[masks[j1, 0] | masks[j1, 1]];
-                if ((((j1|j2)^j2) == 0) && (dp[i, 0] == minH - 1)) sets.Add(j1);     
+                int j = (mask ^ i);
+                int k = subsets[vpos[j][0], vpos[j].Last()] & j;
+                if (((k | i) == mask) && (dp[i, 0] == minH - 1)) { sets.Add(j); locmasks[j] = 0x0000ffff; }
             }
+<<<<<<< HEAD
 
             //sets.Sort((id1, id2) => fndcnt(id2) - fndcnt(id1));
+=======
+>>>>>>> 0e47976f714897b6a48e96f950fabee224ca2074
         }
 
         private int[] find_solution(int n) {
@@ -83,19 +97,16 @@ namespace PointsOnPlane
             if (dp[set, 1] > 0) return dp[set, 1];
 
             bool flag = true;
-            foreach (var x in sets) flag = flag && (fndcnt(x & set) <= 2);
-            if (flag)
-            {
-                dp[set, 1] = fac[fndcnt(set)];
+            foreach (var x in sets) flag = flag && (masks[x & set, 3] <= 2);
+            if (flag) {
+                dp[set, 1] = fac[masks[set, 3]];
                 return dp[set, 1];
             }
 
-
             var subsets = new HashSet<int>();
-            int max_key = 0;
-            foreach(var el in sets)
-            {
+            foreach (var el in sets) {
                 int subset = el & set;
+<<<<<<< HEAD
                 if (subset != 0)
                     if (dp[set, 0] == dp[subset ^ set, 0] + 1)
                     {
@@ -104,20 +115,29 @@ namespace PointsOnPlane
                     }
             }
             
+=======
+                subsets.Add(subset & locmasks[subset]);
+            }
+            subsets.Remove(0);
+            if(subsets.Count == 0) {
+                return 0;
+            }
+
+            int max_key = 0;
+            foreach(var el in subsets) {
+                if (masks[max_key,3] < masks[el, 3]) {
+                    max_key = el;
+                }
+            }
+            max_key = subsets.First<int>();
+>>>>>>> 0e47976f714897b6a48e96f950fabee224ca2074
 
             foreach (var subset in subsets) {
-                if(0 == ((subset | max_key)^max_key))
-                {
+                if(0 == ((subset & max_key)^subset)) {
                     dp[set, 1] = (dp[set,1] + dp[set,0] * subsolution(subset ^ set)) % prime;
                 }
             }
             return dp[set, 1];
-        }
-
-        private int fndcnt(int id) {
-            int cnt = 0;
-            for (; id != 0; id >>= 1) cnt += 1 & id;
-            return cnt;
         }
 
         private static int[] init_fac() {
@@ -133,31 +153,58 @@ namespace PointsOnPlane
 
         private static int[,] init_masks()
         {
+<<<<<<< HEAD
             int n = 1 << 16;
             int[,] _masks = new int[n, 32];
             for (int i = 1; i < n; ++i)
+=======
+            int[,] _masks = new int[maxlen, 4];
+            for (int i = 1; i < maxlen; ++i)
+>>>>>>> 0e47976f714897b6a48e96f950fabee224ca2074
             {
                 for (int j = 0; (_masks[i, 0] & i) == 0; ++j) _masks[i, 0] = 1 << j;
-                for (int j = n; (_masks[i, 1] & i) == 0; _masks[i, 1] = 1 << (--j));
+                for (int j = maxlen; (_masks[i, 1] & i) == 0; _masks[i, 1] = 1 << (--j));
                 _masks[i, 2] = (~(_masks[i, 0] - 1)) & ((_masks[i, 1] << 1) - 1);
+                _masks[i, 3] = fndcnt(i);
             }
             return _masks;
+        }
+
+        private static int[][] init_vpos() {
+            int[][] _vpos = new int[maxlen][];
+            for(int i = 0; i < maxlen; ++i) {
+                var tmp = new List<int>();
+                for(int j = 0; j < 16; ++j) {
+                    if (((1 << j) & i) != 0) tmp.Add(j);
+                }
+                _vpos[i] = tmp.ToArray();
+            }
+            return _vpos;
+        }
+
+        private static int fndcnt(int id) {
+            int cnt = 0;
+            for (; id != 0; cnt += 1 & id, id >>= 1);
+            return cnt;
         }
 
         private Comparison<int[]> comp = (x1, x2) => x1[0] < x2[0] ? -1 : (x1[0] == x2[0]) && (x1[1] < x2[1]) ? -1 : 1;
         private int encodeset(int i, int setid) => setid | (1 << i);
 
         private readonly int[] fac = null;
-        private readonly int[,] masks = null;
+        private static int[,] masks = null;
+        private readonly int[][] vpos = null;
+        private int[] locmasks = null;
         private List<int> sets = null;
         private int[,] dp = null;
         private const int prime = 1000000007;
+        private const int maxlen = 0x00010000;
 
 
         static void Main(string[] args)
         {
             //TextWriter textWriter = new StreamWriter(@System.Environment.GetEnvironmentVariable("OUTPUT_PATH"), true);
-            StreamReader sr = new StreamReader("C:\\Users\\PLDD\\Repa\\HackerRank\\PointsOnPlane\\input.txt");
+            StreamReader sr = new StreamReader("C:\\Users\\PLDD\\Documents\\My\\HackerRank\\PointsOnPlane\\input.txt");
             //int t = Convert.ToInt32(Console.ReadLine());
             int t = Convert.ToInt32(sr.ReadLine());
 
