@@ -46,7 +46,6 @@ namespace PointsOnPlane
                 for (int j = 0; j < n; ++j) 
                     subsets[i,j] = setids[subsets[i, j] - 1];
                 
-
             dp = new int[1 << n, 2];
             for (int i = 1; i < dp.GetLength(0); ++i) { dp[i, 0] = prime; dp[i, 1] = 0; }
             dp[0, 1] = 1;
@@ -61,10 +60,11 @@ namespace PointsOnPlane
                 dp[i, 0] = dpv.Min();
             }
 
+            locmasks = new int[maxlen];
             sets = new List<int>();
             int mask = (1 << n) -1;
             int minH = dp[mask, 0];
-            for(int i = 0; i <= mask; i ++)
+            for(int i = 0; i < mask; i ++)
             {
                 int j = (mask ^ i);
                 int k = subsets[vpos[j][0], vpos[j].Last()] & j;
@@ -82,24 +82,29 @@ namespace PointsOnPlane
             if (dp[set, 1] > 0) return dp[set, 1];
 
             bool flag = true;
-            foreach (var x in sets) flag = flag && (masks[x & set,3] <= 2);
-            if (flag)
-            {
-                dp[set, 1] = fac[masks[set,3]];
+            foreach (var x in sets) flag = flag && (masks[x & set, 3] <= 2);
+            if (flag) {
+                dp[set, 1] = fac[masks[set, 3]];
                 return dp[set, 1];
             }
 
-            var subsets = new HashSet<int>(new EqualityComparer<int>( (el)=>masks[el,3]));
-            foreach(var el in sets) {
+            var subsets = new HashSet<int>();
+            foreach (var el in sets) {
                 int subset = el & set;
                 subsets.Add(subset & locmasks[subset]);
             }
             subsets.Remove(0);
+            if(subsets.Count == 0) {
+                return 0;
+            }
 
             int max_key = 0;
             foreach(var el in subsets) {
-                if (max_key < masks[el, 3]) max_key = el;
+                if (masks[max_key,3] < masks[el, 3]) {
+                    max_key = el;
+                }
             }
+            max_key = subsets.First<int>();
 
             foreach (var subset in subsets) {
                 if(0 == ((subset & max_key)^subset)) {
@@ -135,7 +140,7 @@ namespace PointsOnPlane
 
         private static int[][] init_vpos() {
             int[][] _vpos = new int[maxlen][];
-            for(int i = 1; i < maxlen; ++i) {
+            for(int i = 0; i < maxlen; ++i) {
                 var tmp = new List<int>();
                 for(int j = 0; j < 16; ++j) {
                     if (((1 << j) & i) != 0) tmp.Add(j);
@@ -147,7 +152,7 @@ namespace PointsOnPlane
 
         private static int fndcnt(int id) {
             int cnt = 0;
-            for (; id != 0; id >>= 1, cnt += 1 & id);
+            for (; id != 0; cnt += 1 & id, id >>= 1);
             return cnt;
         }
 
@@ -167,7 +172,7 @@ namespace PointsOnPlane
         static void Main(string[] args)
         {
             //TextWriter textWriter = new StreamWriter(@System.Environment.GetEnvironmentVariable("OUTPUT_PATH"), true);
-            StreamReader sr = new StreamReader("C:\\Users\\PLDD\\Repa\\HackerRank\\PointsOnPlane\\input.txt");
+            StreamReader sr = new StreamReader("C:\\Users\\PLDD\\Documents\\My\\HackerRank\\PointsOnPlane\\input.txt");
             //int t = Convert.ToInt32(Console.ReadLine());
             int t = Convert.ToInt32(sr.ReadLine());
 
