@@ -1,0 +1,128 @@
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using Moq;
+using SimCorp.IMS.MiddleOffice.Engine.Api;
+using SimCorp.IMS.MiddleOffice.Engine.Api.Common;
+using SimCorp.IMS.MiddleOffice.Engine.Facade;
+using SimCorp.IMS.MiddleOffice.Engine.Facade.Common;
+using SimCorp.IMS.Framework.DataSharing;
+using SimCorp.IMS.Framework.DataSharing.Service.Implementation;
+using SimCorp.IMS.Framework.DataSharing.Queryable;
+using Microsoft.VisualStudio.TestTools.UnitTesting;
+
+namespace SimCorp.IMS.MiddleOffice.Engine.Api.Test {
+    [TestClass]
+    public class DataSourceAdapterCalculationEngineTest {
+
+        public DataSourceAdapterCalculationEngineTest() {
+        }
+
+        private delegate bool comSelect(string Id, string Title, FormatType FormatType, string TypeName, string CurrencyTypeName, string PeriodName, IDictionary<string,Array> Result);
+
+        [TestMethod]
+        public void SelectFromTypes() {
+            var dataSource = new DataSourceAdapterCalculationEngine(new CalculationEngineFacadeStub());
+            dataSource.Initialize();
+            var credentials = new OperationCredentials(Environment.UserName.ToUpper());
+
+            comSelect Comp = (a1, a2, a3, a4, a5, a6, res) => {
+                bool flag = res["Id"].GetValue(0).Equals(a1);
+                flag = flag && res["Title"].GetValue(0).Equals(a2);
+                flag = flag && res["FormatType"].GetValue(0).Equals((int)a3);
+                flag = flag && res["TypeName"].GetValue(0).Equals(a4);
+                flag = flag && res["CurrencyTypeName"].GetValue(0).Equals(a5);
+                flag = flag && res["PeriodName"].GetValue(0).Equals(a6);
+                return flag;
+            };
+
+            var query = new QueryData() {
+                EntityName = "Analytics",
+                PropertyPaths = new[] {"Id", "Title", "FormatType", "TypeName", "CurrencyTypeName", "PeriodName"},
+                Filter = null,
+                MaxCount = 1000
+            };
+
+            query.Filter = "Id in (\"IRR\") and FormatType in (Numeric) and CurrencyTypeName in (\"QC\") and PeriodName in (\"Month\")";
+            var result = dataSource.SelectAsync(credentials, query).Result.Data;
+            Assert.IsTrue(Comp("IRR","IRR",FormatType.Numeric, "Numeric", "QC", "Month",result));
+
+            query.Filter = "Id in (\"AnualIRR\") and FormatType in (Numeric) and CurrencyTypeName in (\"PC\") and PeriodName in (\"Month\")";
+            result = dataSource.SelectAsync(credentials, query).Result.Data;
+            Assert.IsTrue(Comp("AnualIRR", "AnualIRR", FormatType.Numeric, "Numeric", "PC", "Month", result));
+
+            query.Filter = "Id in (\"IRR\") and FormatType in (Amount) and CurrencyTypeName in (\"RC\") and PeriodName in (\"Year\")";
+            result = dataSource.SelectAsync(credentials, query).Result.Data;
+            Assert.IsTrue(Comp("IRR", "IRR", FormatType.Amount, "Amount", "RC", "Year", result));
+
+            query.Filter = "Id in (\"IRR\",\"AnualIRR\") and FormatType in (Amount) and CurrencyTypeName in (\"RC\") and PeriodName in (\"Year\")";
+            result = dataSource.SelectAsync(credentials, query).Result.Data;
+            Assert.IsTrue(Comp("IRR", "IRR", FormatType.Amount, "Amount", "RC", "Year", result));
+
+            query.Filter = "Id in (\"AnualIRR\") and FormatType in (Amount) and CurrencyTypeName in (\"RC\") and PeriodName in (\"Year\")";
+            result = dataSource.SelectAsync(credentials, query).Result.Data;
+            Assert.IsTrue(Comp("AnualIRR", "AnualIRR", FormatType.Amount, "Amount", "RC", "Year", result));
+
+            query.Filter = "Id in (\"AnualIRR\") and FormatType in (Amount) and CurrencyTypeName in (\"QC\") and PeriodName in (\"Year\")";
+            result = dataSource.SelectAsync(credentials, query).Result.Data;
+            Assert.IsTrue(Comp("AnualIRR", "AnualIRR", FormatType.Amount, "Amount", "QC", "Year", result));
+
+            query.Filter = "Id in (\"AnualIRR\") and FormatType in (Numeric) and CurrencyTypeName in (\"QC\") and PeriodName in (\"Month\")";
+            result = dataSource.SelectAsync(credentials, query).Result.Data;
+            Assert.IsTrue(Comp("AnualIRR", "AnualIRR", FormatType.Numeric, "Numeric", "QC", "Month", result));
+        }
+
+        [TestMethod]
+        public void OperationsEntityNames() {
+            var dataSource = new DataSourceAdapterCalculationEngine(new CalculationEngineFacadeStub());
+            dataSource.Initialize();
+            var credentials = new OperationCredentials(Environment.UserName.ToUpper());
+
+            var AnalysisDates = new[] { new DateTime(2014, 12, 21)};
+            var Groupings = new[] {GroupingCriteriaEnum.PortfolioKey, GroupingCriteriaEnum.SecurityKey, GroupingCriteriaEnum.InstrumentType};
+            var AnalyticIds = new[] {"IRR", "AnualIRR"};
+            var PeriodTermLength = new[] {1};
+            var PeriodTermUnits = new[] {PeriodTermUnitEnum.Years};
+            var RestrictionSet = new[] {
+                new RestrictionSetEntity {
+                    Restrictions =
+                        new[] {
+                            new RestrictionEntity {Criteria = RestrictionCriteriaEnum.PortfolioKey},
+                            new RestrictionEntity {Criteria = RestrictionCriteriaEnum.SecurityKey}
+                        },
+                        OnlyIncludeActiveInvestment = true,
+                        OnlyIncludeSecuritiesLinkedToAnAsset = true
+                }
+            };
+
+            var convGroupings = new[] { GroupingCriteria.PortfolioKey, GroupingCriteria.SecurityKey, GroupingCriteria.InstrumentType };
+            var convRestValues = new[] {RestrictionCriteria.PortfolioKey, RestrictionCriteria.SecurityKey};
+            var convPeriodTermUnit = new[] { PeriodTermUnit.Years };
+
+            var validOutput = new HashSet<string>();
+            var basestr = AnalysisDates[0].Date.ToString() + convPeriodTermUnit[0].ToString() +
+                          PeriodTermLength[0].ToString();
+            foreach (var id in AnalyticIds) {
+                foreach (var rest in convRestValues) {
+                    foreach (var criteria in convGroupings) {
+                        validOutput.Add(basestr + id.ToString() + rest.ToString() + criteria.ToString());
+                    }
+                }
+            }
+
+            var arguments = new OperationData("Calculate", false) {
+                {"AnalysisDates",  AnalysisDates},
+                { "Groupings", Groupings  },
+                { "AnalyticIds", AnalyticIds },
+                { "RestrictionSet", RestrictionSet },
+                { "PeriodTermUnit",  PeriodTermUnits},
+                { "PeriodTermLength",  PeriodTermLength },
+            };
+
+            var result = dataSource.InvokeAsync(credentials, "CalculateAnalytics", arguments).Result;
+            // FourthItemSumResult typedResult = OperationDataSerialization.Deserialize<FourthItemSumResult>(operation.Result, result);
+            //Assert.AreEqual(110, typedResult.SumValue);
+        }
+
+    }
+}
