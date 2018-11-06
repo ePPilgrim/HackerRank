@@ -1,0 +1,71 @@
+using System;
+using System.Collections.Generic;
+using SimCorp.IMS.MiddleOffice.Engine.Facade;
+using SimCorp.IMS.MiddleOffice.Engine.Facade.Common;
+using SimCorp.IMS.MiddleOffice.Engine.Api;
+using SimCorp.IMS.MiddleOffice.Engine.Api.Common;
+
+namespace SimCorp.IMS.MiddleOffice.Engine.Api.Test {
+    public class CalculationEngineFacadeStub : ICalculationEngineFacade {
+
+
+        public List<Analytics> Analytics = new List<Analytics>();
+        public List<CalculationArgument> CalculationArguments = new List<CalculationArgument>();
+        public Dictionary<int, int> Results = new Dictionary<int, int>();
+
+        public CalculationEngineFacadeStub() {
+            init();
+        }
+        public Results Calculate(DateTime analysisDate, List<string> analyticsIds, RestrictionSet restrictions, List<GroupingCriteria> groupingCriterias) {
+            return Calculate(analysisDate, 0, -1, analyticsIds, restrictions, groupingCriterias);
+        }
+
+        public Results Calculate(DateTime analysisDate, PeriodTermUnit periodTermUnit, int periodTermLenght, List<string> analyticsIds, RestrictionSet restrictions, List<GroupingCriteria> groupingCriterias) {
+            var res = new List<AnalyticsResult>();
+            var basenodeid = analysisDate.ToString();
+            if (periodTermLenght > 0) {
+                basenodeid += periodTermUnit.ToString() + periodTermLenght;
+            }
+            foreach (var id in analyticsIds) {
+                foreach (var restriction in restrictions.Restrictions) {
+                    foreach (var criteria in groupingCriterias) {
+                        res.Add(new AnalyticsResult() { NodeId = basenodeid + id + restriction.Criteria + criteria });
+                    }
+                }
+            }
+            return new Results(res);
+        }
+
+        public List<Analytics> GetSupportedAnalytics() {
+            return Analytics;
+        }
+
+        public List<NodeSpecification> GetLeafNodeSpecifications(RestrictionSet restrictions, List<GroupingCriteria> groupingCriterias, DateTime analysisDate) {
+            return null;
+        }
+
+        public List<string> GetNodeIds(List<NodeSpecification> nodeSpecifications) {
+            return null;
+        }
+
+        private void init() {
+            foreach (var id in new[] { "IRR", "AnualIRR" }) {
+                foreach (var formattype in new[] { FormatType.Numeric, FormatType.Amount }) {
+                    foreach (var currencytypename in new[] { "QC", "RC", "PC" }) {
+                        foreach (var periodname in new[] { "Year", "Month" }) {
+                            Analytics.Add(new Analytics {
+                                Id = id,
+                                Title = id,
+                                FormatType = formattype,
+                                TypeName = formattype.ToString(),
+                                CurrencyTypeName = currencytypename,
+                                PeriodName = periodname
+                            });
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
