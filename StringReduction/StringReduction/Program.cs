@@ -33,9 +33,13 @@ public class StringReduction{
         throw new NotImplementedException();
     }
 
-    mask findstate(mask s1, mask s2){
-        mask s = 0;
-        s |= mask.bodd & s1;  
+    State findstate(State s1, State s2){
+        State s = 0;
+        bool b = (State.bodd & s1) != 0 && (State.codd & s2) != 0 ||
+                    (State.codd & s1) != 0 && (State.bodd & s2) != 0 ||
+                    (State.aodd & s1) != 0 && (State.beven | State.ceven & s2) != 0 ||
+                    (State.beven | State.ceven & s1) != 0 && (State.aodd & s2) != 0;
+
         return s;
     } 
 }
