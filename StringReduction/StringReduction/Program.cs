@@ -14,7 +14,7 @@ using System;
 
 public class State{
     public enum BitMask {
-        aodd = 1,
+        aodd = 1 << 0,
         bodd = 1 << 1,
         codd = 1 << 2,
         aeven = 1 << 3,
@@ -65,8 +65,6 @@ public class StringReduction{
     {
         throw new NotImplementedException();
     }
-
-
 }
 
 class Solution {
