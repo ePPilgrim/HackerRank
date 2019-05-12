@@ -50,8 +50,6 @@ public class State{
             (zodd & X & Y) != 0 || (zeven & X & Y) != 0)  return zeven;
         return 0;
     } 
-
-
 }
 
 public class StringReduction{
