@@ -53,17 +53,32 @@ public class State{
 }
 
 public class StringReduction{
-
-
-    readonly string sequence = null;
+    readonly IList<State.BitMask> sequence = null;
+    readonly IDictionary<char, State.BitMask[]> map = new Dictionary<char, State.BitMask[]>{
+        {'a', new State.BitMask[]{State.BitMask.aeven, State.BitMask.aodd}},
+        {'b', new State.BitMask[]{State.BitMask.beven, State.BitMask.bodd}},
+        {'c', new State.BitMask[]{State.BitMask.ceven, State.BitMask.codd}}
+    };
     
     public StringReduction(string str){
         sequence = preprocessing(str);
     }
 
-    private string preprocessing(string str)
+    private IList<State.BitMask> preprocessing(string str)
     {
-        throw new NotImplementedException();
+        var seq = new List<State.BitMask>();
+        var ch = 'x';
+        var cnt = 0;
+        foreach(var el in str){
+            if(el == ch){
+                cnt ++;
+                continue;
+            }
+            seq.Add(map[ch][cnt%2]);
+            cnt = 0;
+            ch = el;
+        }
+        return seq;
     }
 }
 
