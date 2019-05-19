@@ -25,7 +25,12 @@ public class State{
     public BitMask X;
     public BitMask Y;
 
-    BitMask findBitMask(){
+    public State(BitMask bitMask1, BitMask bitMask2){
+        X = bitMask1;
+        Y = bitMask2;
+    }
+
+    public BitMask findBitMask(){
         BitMask s = 0;
         s |= findOddBitMask(BitMask.aodd, BitMask.bodd, BitMask.codd, BitMask.beven | BitMask.ceven);
         s |= findOddBitMask(BitMask.bodd, BitMask.aodd, BitMask.codd, BitMask.aeven | BitMask.ceven);
@@ -50,10 +55,25 @@ public class State{
             (zodd & X & Y) != 0 || (zeven & X & Y) != 0)  return zeven;
         return 0;
     } 
+
+    internal static bool IsFull(BitMask mask){
+        var flag = false;
+        foreach(BitMask bitval in Enum.GetValues(typeof(BitMask))){
+            flag = flag &&  (mask & bitval) != 0;
+        } 
+        return flag;
+    }
+
+    internal static int FindMinCnt(BitMask bitMask){
+        if((bitMask & (BitMask.aodd | BitMask.bodd | BitMask.codd) ) != 0) return 1;
+        return 2;
+    }
 }
 
 public class StringReduction{
     readonly IList<State.BitMask> sequence = null;
+    readonly int initcnt = 0;
+    private State.BitMask[,] subDps = new State.BitMask[100,100];
     readonly IDictionary<char, State.BitMask[]> map = new Dictionary<char, State.BitMask[]>{
         {'a', new State.BitMask[]{State.BitMask.aeven, State.BitMask.aodd}},
         {'b', new State.BitMask[]{State.BitMask.beven, State.BitMask.bodd}},
@@ -61,23 +81,47 @@ public class StringReduction{
     };
     
     public StringReduction(string str){
+        initcnt = str.Count();
         sequence = preprocessing(str);
+        for(int i = 0; i < sequence.Count(); ++ i){
+            subDps[i,i] = sequence[i];
+        }
+    }
+
+    public int FindMinCnt(){
+        dp();
+        if(sequence.Count() == 1){ return initcnt;}
+        int lastIndex = sequence.Count() - 1;
+        return State.FindMinCnt(subDps[0, lastIndex]);
+    }
+
+    private void dp()
+    {
+        for(int len = 2; len <= sequence.Count(); ++ len){
+            int j2 = sequence.Count() - len;
+            for(int j1 = 0; j1 <= j2 ; ++ j1){
+                int k2 = j1 + len - 1;
+                State.BitMask dpel = 0;
+                for(int k1 = j1; (k1 < k2) && (State.IsFull(dpel) == false); ++ k1 ){
+                    var state = new State(subDps[j1,k1], subDps[k1 + 1, k2]);
+                    dpel |= state.findBitMask();
+                }
+                subDps[j1,k2] = dpel;
+                //Console.WriteLine($"subDps[{j1},{k2}] = {dpel}.");
+            }
+        }
     }
 
     private IList<State.BitMask> preprocessing(string str)
     {
         var seq = new List<State.BitMask>();
-        var ch = 'x';
-        var cnt = 0;
-        foreach(var el in str){
-            if(el == ch){
-                cnt ++;
+        for(int i = 0, cnt = 1; i < str.Count(); ++ i, ++ cnt){
+            if((i == str.Count() - 1) || str[i + 1] != str[i]){
+                seq.Add(map[str[i]][cnt%2]);
+                cnt = 0;
                 continue;
             }
-            seq.Add(map[ch][cnt%2]);
-            cnt = 0;
-            ch = el;
-        }
+        }    
         return seq;
     }
 }
@@ -86,23 +130,25 @@ class Solution {
 
     // Complete the stringReduction function below.
     static int stringReduction(string s) {
-        throw new NotImplementedException();
+        var str = new StringReduction(s);
+        return str.FindMinCnt();
     }
 
     static void Main(string[] args) {
-        TextWriter textWriter = new StreamWriter(@System.Environment.GetEnvironmentVariable("OUTPUT_PATH"), true);
+        //TextWriter textWriter = new StreamWriter(@System.Environment.GetEnvironmentVariable("OUTPUT_PATH"), true);
 
-        int t = Convert.ToInt32(Console.ReadLine());
+        int t = 3;//Convert.ToInt32(Console.ReadLine());
+        var sss = new string[]{"cab", "bcab", "ccccc"};
 
         for (int tItr = 0; tItr < t; tItr++) {
-            string s = Console.ReadLine();
+            string s = sss[tItr];//Console.ReadLine();
 
             int result = stringReduction(s);
 
-            textWriter.WriteLine(result);
+            //textWriter.WriteLine(result);
+            Console.WriteLine(result);
         }
-
-        textWriter.Flush();
-        textWriter.Close();
+        //textWriter.Flush();
+       // textWriter.Close();
     }
 }
