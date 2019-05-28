@@ -25,7 +25,7 @@ internal class Matrix{
         CCnt = matrix[0].Count();
     }
 
-    public void SetOutlined(int rix, int cix, int level){
+    public void SetOutlined(int level){
         var list = new List<int>(2048);
         foreach(var el in getOutlined(level)){
             list.Add(el);
@@ -33,8 +33,13 @@ internal class Matrix{
 
         int i = 0;
         var shiftedix = getShiftedIx(level); 
-        foreach(var ix in generateIndexes(shiftedix.Item1, shiftedix.Item2, level)){
-            matrix[ix.Item1][ix.Item2] = list[++i];
+        int rix = shiftedix.Item1;
+        int cix = shiftedix.Item2;
+        foreach(var ix in generateIndexes(rix, cix, level)){
+            if(ix < 0){
+                rix = -ix;
+            } else{cix = ix;}
+            matrix[rix][cix] = list[++i];
         }
     }
 
@@ -51,7 +56,7 @@ internal class Matrix{
     {
         int rr = RCnt - 2 * level;
         int cc = CCnt - 2 * level;
-        int r = R % (rr + cc - 4); 
+        int r = R % (2*(rr + cc) - 4); 
         if(r < rr){
             return new Tuple<int,int>(level + r, level);
         } else if(r < cc + rr){
@@ -63,23 +68,34 @@ internal class Matrix{
     }
 
     private IEnumerable<int> getOutlined(int level){
-        var list = new List<int>();
-        foreach(var el in generateIndexes(level, level,level)) {
-            yield return matrix[el.Item1][el.Item2];
+        int cix = level;
+        int rix = level;
+        foreach(var ix in generateIndexes(rix, cix, level)) {
+            if(ix < 0){
+                rix = -ix;
+            } else{cix = ix;}
+            yield return matrix[rix][cix];
         }
     }
 
-    private IEnumerable<Tuple<int,int>> generateIndexes(int rix, int cix, int level){
-        var rc = (cix == level || cix == CCnt - level - 1) ? 0 : 1;
-        var ix = new int[]{rix, cix};
+    private IEnumerable<int> generateIndexes(int rix, int cix, int level){
+        int min = level;
+        int rmax = RCnt - min - 1;
+        int cmax = CCnt - min - 1;
+        int rx = rix;
+        int cx = cix;
 
-        do{
-            yield return new Tuple<int,int>(ix[0], ix[1]);
-            if(ix[rc] == level || (ix[rc] + level + 1) == ((rc == 1) ? CCnt : RCnt) ){
-                rc = (rc + 1) % 2;
+        while(rx != rix && cx != cix){
+            if(rx == min && cx < cmax){
+                yield return (cx++);
+            } else if(cx == cmax && rx < rmax){
+                yield return -(rx++);
+            } else if(rx == rmax && cx > min){
+                yield return (cx--);
+            } else {
+                yield return -(rx--);
             }
-            ix[rc] -= 1;
-        } while(ix[0] != rix && ix[1] != cix);
+        }
     }
 }
 
