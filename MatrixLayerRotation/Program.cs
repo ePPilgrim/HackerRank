@@ -60,13 +60,13 @@ namespace MatrixReduction {
             if (r < rr) {
                 return new Tuple<int, int>(level + r, level);
             }
-            if (r < cc + rr) {
-                return new Tuple<int, int>(RCnt - 1 - level, level + r - rr);
+            if (r < cc + rr - 1) {
+                return new Tuple<int, int>(RCnt - 1 - level, level + r + 1 - rr);
             } 
-            if (r < 2 * rr + cc) {
-                return new Tuple<int, int>(level + 2 * rr + cc - r, CCnt - level - 1);
+            if (r < 2 * rr + cc - 2) {
+                return new Tuple<int, int>(level + 2 * rr + cc - r - 3, CCnt - level - 1);
             }
-            return new Tuple<int, int>(level, level + 2 * (rr + cc) - r);
+            return new Tuple<int, int>(level, level + 2 * (rr +  cc) - r - 4);
         }
 
         private IEnumerable<int> getOutlined(int level) {
@@ -93,16 +93,6 @@ namespace MatrixReduction {
             }
             while ((rx != rix) || (cx != cix));
         }
-
-        public void getOutlined1() {
-            int cix = 0;
-            int rix = 1;
-            foreach (var ix in generateIndexes(rix, cix, 0)) {
-                Console.WriteLine($"{ix.Item1} {ix.Item2}");
-            }
-        }
-
-
     }
 
     class Solution {
@@ -110,7 +100,6 @@ namespace MatrixReduction {
         // Complete the matrixRotation function below.
         static void matrixRotation(List<List<int>> matrix, int r) {
             var mat = new Matrix(matrix, r);
-            mat.Print();
             for (int i = 0; i < mat.MaxLevel; ++i) {
                 mat.SetOutlined(i);
             }
@@ -119,25 +108,22 @@ namespace MatrixReduction {
         }
 
         static void Main(string[] args) {
-            //string[] mnr = Console.ReadLine().TrimEnd().Split(' ');
+            string[] mnr = Console.ReadLine().TrimEnd().Split(' ');
 
-            //int m = Convert.ToInt32(mnr[0]);
+            int m = Convert.ToInt32(mnr[0]);
 
-            //int n = Convert.ToInt32(mnr[1]);
+            int n = Convert.ToInt32(mnr[1]);
 
-            //int r = Convert.ToInt32(mnr[2]);
+            int r = Convert.ToInt32(mnr[2]);
 
-            //List<List<int>> matrix = new List<List<int>>();
+            List<List<int>> matrix = new List<List<int>>();
 
-            //for (int i = 0; i < m; i++) {
-            //    matrix.Add(Console.ReadLine().TrimEnd().Split(' ').ToList().Select(matrixTemp => Convert.ToInt32(matrixTemp)).ToList());
-            //}
-            int r = 9;
-            var matrix = new List<List<int>>() {new List<int>() {1,2,3},new List<int>() {4,5,6} };
+            for (int i = 0; i < m; i++) {
+                matrix.Add(Console.ReadLine().TrimEnd().Split(' ').ToList().Select(matrixTemp => Convert.ToInt32(matrixTemp)).ToList());
+            }
             matrixRotation(matrix, r);
         }
     }
-
 }
 
 
