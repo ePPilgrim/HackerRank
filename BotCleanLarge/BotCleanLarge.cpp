@@ -22,7 +22,32 @@ class FindShortestWay{
     list<int> OffPathPoints;
     list<int> OnPathPoints;
 
-    void findShortestPath(){}
+    void findShortestPath(){
+        int pathLength = Distance[OnPathPoints.front][OnPathPoints.back];
+        for(auto it=OnPathPoints.begin(); ; ++ it){
+            auto next_it = it;
+            next_it ++;
+            if(next_it == OnPathPoints.end()) next_it = OnPathPoints.begin();
+            pathLength += Distance[*it][*next_it];
+        }
+        for(;OffPathPoints.size != 0;){
+            int min_len = 1000000000;
+            auto min_it = OffPathPoints.begin();
+            auto min_jt = OnPathPoints.begin();
+            for(auto it = OffPathPoints.begin(); it != OffPathPoints.end(); ++ it){
+                for(auto jt = OnPathPoints.begin(); jt != OnPathPoints.end(); ++ jt){
+                    auto next_jt = jt;
+                    next_jt ++;
+                    if(next_jt == OnPathPoints.end()) next_jt = OnPathPoints.begin();
+                    auto len = pathLength - Distance[*jt][*next_jt] + Distance[*jt][*it] + Distance[*next_jt][*it];
+                    if(len < min_len) min_len = len, min_jt = next_jt, min_it = it;
+                }
+            }
+            pathLength = min_len;
+            OnPathPoints.insert(min_jt, *min_it);
+            OffPathPoints.erase(min_it);
+        }
+    }
 
     bool findConvexHull(){
         auto id0 = OnPathPoints.back();
@@ -43,6 +68,8 @@ class FindShortestWay{
         OffPathPoints.erase(it1);
         return false;
     }
+
+
 };
 
 
