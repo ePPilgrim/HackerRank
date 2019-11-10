@@ -16,11 +16,32 @@ int main()
 
 }
 
+class FindNextStep{
+    
+};
+
 class FindShortestWay{
     vector<vector<int>> Distance;
     vector<Point> Points;
     list<int> OffPathPoints;
     list<int> OnPathPoints;
+
+    FindShortestWay(const vector<Point>& points){
+        Points = points;
+        for(int i = 0; i < Points.size(); ++ i) OffPathPoints.push_back(i);
+        Distance = vector<vector<int>>();
+        Distance.resize(Points.size());
+        for(int i = 0; i < Distance.size(); ++ i){
+            Distance[i] = vector<int>();
+            Distance[i].resize(Points.size());
+            Distance[i][i] = 0;
+            for(int j = 0; j < i; ++ j){
+                Distance[j][i] = Distance[i][j] = (Points[j].first - Points[i].first) * (Points[j].first - Points[i].first)
+                                + (Points[j].second - Points[i].second) * (Points[j].second - Points[i].second);
+            }
+        }
+
+    }
 
     void findShortestPath(){
         int pathLength = Distance[OnPathPoints.front][OnPathPoints.back];
