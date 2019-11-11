@@ -33,7 +33,7 @@ class FindShortestWay{
 
     void findShortestPath(){
         int pathLength = Distance[OnPathPoints.front()][OnPathPoints.back()];
-        for(auto it=OnPathPoints.begin(); ; ++ it){
+        for(auto it=OnPathPoints.begin(); it != OnPathPoints.end(); ++ it){
             auto next_it = it;
             next_it ++;
             if(next_it == OnPathPoints.end()) next_it = OnPathPoints.begin();
@@ -81,8 +81,8 @@ class FindShortestWay{
 
 string next_move(int posr, int posc, int dimh, int dimw, vector <string> board) {
     if(board[posr][posc] == 'd') {
-        cout << "CLEAN" <<std::endl;
-        return;
+        //cout << "CLEAN" <<std::endl;
+        return "CLEAN";
     }
     vector<Point> vec = vector<Point>();
     vec.reserve(2500);
@@ -96,12 +96,13 @@ string next_move(int posr, int posc, int dimh, int dimw, vector <string> board) 
     FindShortestWay path = FindShortestWay(vec);
     auto min_it = path.OffPathPoints.begin();
     for(auto it = path.OffPathPoints.begin(); it != path.OffPathPoints.end(); ++ it){
-        if(vec[*it].first < vec[*min_it]) min_it = it;
+        if(vec[*it].first < vec[*min_it].first) min_it = it;
     }
     path.OffPathPoints.erase(min_it);
     path.OnPathPoints.push_back(*min_it);
     for(;path.findConvexHull() == false;);
     path.findShortestPath();
+    string res = "EMPTY";
     for(auto it = path.OnPathPoints.begin(); it != path.OnPathPoints.end(); ++ it){
         if(*it == 0){
             auto next_it = it;
@@ -109,19 +110,18 @@ string next_move(int posr, int posc, int dimh, int dimw, vector <string> board) 
             if(next_it == path.OnPathPoints.end()) next_it = path.OnPathPoints.begin();
             int x = vec[*next_it].first - vec[*it].first;
             int y = vec[*next_it].second - vec[*it].second;
-            string res = "EMPTY";
             if(x > 0) res = "RIGHT";
             if(x < 0) res = "LEFT";
             if(y > 0) res = "DOWN";
             if(y < 0) res = "UP";
-            return res;
             // if(x > 0) cout << "RIGHT" << std::endl;
             // if(x < 0) cout << "LEFT" << std::endl;
             // if(y > 0) cout << "DOWN" << std::endl;
             // if(y < 0) cout << "UP" << std::endl;
             //return;
         }
-    }
+    } 
+    return res;
 }
 
 
@@ -159,6 +159,7 @@ int main()
         if(status == "UP"){
             pos[0] --;
         }
+        status = next_move(pos[0], pos[1], dim[0], dim[1], board);
     } 
     return 0;
 }
