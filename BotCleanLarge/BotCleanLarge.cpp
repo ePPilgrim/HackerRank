@@ -60,21 +60,22 @@ class FindShortestWay{
 
     bool findConvexHull(){
         auto id0 = OnPathPoints.back();
-        auto p0 = Points[id0];
-        auto it1 = OffPathPoints.begin();
+        auto p0 = Points[OnPathPoints.back()];
+        auto id1 = OnPathPoints.front();
+        if(id1 == id0) id1 = OffPathPoints.front();
         for(auto it = OffPathPoints.begin(); it != OffPathPoints.end(); ++ it ){
-            int x1 = (Points[*it1].first - p0.first);
-            int y1 = (Points[*it1].second - p0.second);
+            int x1 = (Points[id1].first - p0.first);
+            int y1 = (Points[id1].second - p0.second);
             int x2 = (Points[*it].first - p0.first);
             int y2 = (Points[*it].second - p0.second);
             auto sign = x1 * y2 - y1 * x2;
             
             if(sign > 0 || 
-                ((sign == 0) && (Distance[id0][*it1] > Distance[id0][*it]))) it1 = it;
+                ((sign == 0) && (Distance[id0][id1] > Distance[id0][*it]))) id1 = *it;
         }
-        if(*it1 == OnPathPoints.front()) return true;
-        OnPathPoints.push_back(*it1);
-        OffPathPoints.erase(it1);
+        if(id1 == OnPathPoints.front()) return true;
+        OnPathPoints.push_back(id1);
+        OffPathPoints.remove(id1);
         return false;
     }
 };
@@ -159,6 +160,7 @@ int main()
         if(status == "UP"){
             pos[0] --;
         }
+        std::cout<<status<<std::endl;
         status = next_move(pos[0], pos[1], dim[0], dim[1], board);
     } 
     return 0;
