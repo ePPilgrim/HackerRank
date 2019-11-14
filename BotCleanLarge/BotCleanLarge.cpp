@@ -2,6 +2,7 @@
 #include <vector>
 #include<list>
 #include <string>
+//#include <graphics> 
 
 using namespace std;
 
@@ -13,6 +14,7 @@ class FindShortestWay{
     vector<Point> Points;
     list<int> OffPathPoints;
     list<int> OnPathPoints;
+    vector<string> Path;
 
     FindShortestWay(const vector<Point>& points){
         Points = points;
@@ -28,7 +30,51 @@ class FindShortestWay{
                                 + (Points[j].second - Points[i].second) * (Points[j].second - Points[i].second);
             }
         }
+        CreateBlankDrawing();
+    }
 
+    void CreateBlankDrawing(){
+        int maxX = 0;
+        int maxY = 0;
+        for(auto it = Points.begin(); it != Points.end(); ++ it){
+            if(maxX < it->first) maxX = it->first;
+            if(maxY < it->second) maxY = it->second;
+        }
+        maxX = 2 * (maxX + 2);
+        maxY = 2 * (maxY + 2);
+        Path.resize(maxY);
+        for(unsigned int i = 0; i < maxY; ++ i){
+            for(int j = 0; j < maxX; ++ j){
+                Path[i] += '-';
+            }
+        }
+    }
+
+    void Draw(){
+        std::cout<<"********************************************************"<<std::endl;
+        for(unsigned int i = 0; i < Path.size(); ++ i){
+            for(int j = 0; j < Path[0].size(); ++ j){
+                Path[i][j] = '-';
+            }
+        }
+        int order = 0;
+        for(auto it = OnPathPoints.begin(); it != OnPathPoints.end(); ++ it){
+            auto p = Points[*it];
+            p.first = 2 * (p.first + 1);
+            p.second = 2 * (p.second + 1);
+            auto num = to_string(order);
+            if(num.length()==1) num = "0" + num;
+            Path[p.second][p.first] = num[0];
+            Path[p.second][p.first + 1] = num[1];
+            order ++;
+        }
+        for(unsigned int i = 0; i < Path.size(); ++ i){
+            for(int j = 0; j < Path[0].size(); ++ j){
+                std::cout << Path[i][j];
+            }
+            std::cout<<std::endl;
+        }
+        std::cout<<std::endl;
     }
 
     void findShortestPath(){
@@ -103,6 +149,7 @@ string next_move(int posr, int posc, int dimh, int dimw, vector <string> board) 
     path.OnPathPoints.push_back(*min_it);
     for(;path.findConvexHull() == false;);
     path.findShortestPath();
+    path.Draw();
     string res = "EMPTY";
     for(auto it = path.OnPathPoints.begin(); it != path.OnPathPoints.end(); ++ it){
         if(*it == 0){
@@ -144,6 +191,13 @@ int main()
     board[2] = "--dd-";
     board[3] = "--d--";
     board[4] = "----d";
+
+    pos[1] = 0;
+    board[0] = "-d---";
+    board[1] = "-d---";
+    board[2] = "---d-";
+    board[3] = "---d-";
+    board[4] = "--d-d";
     for(auto status = next_move(pos[0], pos[1], dim[0], dim[1], board); status != "EMPTY";){
         if(status == "CLEAN"){
             board[pos[0]][pos[1]] = '-';
