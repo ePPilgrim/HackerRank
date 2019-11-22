@@ -11,6 +11,16 @@ using namespace std;
 typedef pair<int,int> Point;
 inline int dist(Point p1, Point p2){return (p2.first - p1.first) * (p2.first - p1.first) + (p2.second - p1.second) * (p2.second - p1.second);}
 
+vector<int> optimalPartition(int sublengh, int length){
+    int n = length / sublengh;
+    auto res = vector<int>(n,sublengh);
+    for(int r = length % sublengh;r>0;--r, res[r%n] ++);
+    return res;
+}
+
+/*vector<Point> DevideIntoZones(int zwidth, int zheight, int width, int height){
+    auto
+}*/
 class FindShortestWay{
     public:
     set<Point> OffPathPoints;
@@ -81,6 +91,8 @@ string next_move(int posr, int posc, int dimh, int dimw, vector <string> board) 
             if(board[i][j] == 'd')  pset.insert(Point(j,i));
         }
     }
+
+    cout<<pset.size()<<std::endl;
     
     if(pset.size() == 1) return "EMPTY";
     FindShortestWay path = FindShortestWay(pset);
@@ -105,6 +117,10 @@ string next_move(int posr, int posc, int dimh, int dimw, vector <string> board) 
             auto dist_next = dist(*it,*next_it);
             auto dist_prev = dist(*it,*prev_it);
             auto point = (dist_next > dist_prev) ? *prev_it : *next_it;
+            if(dist_next == dist_prev){
+                if(prev_it->first == next_it->first) point = (next_it->second > prev_it->second) ? *prev_it : *next_it;
+                else point = (next_it->first > prev_it->first) ? *prev_it : *next_it;
+            }
             int x = point.first - it->first;
             int y = point.second - it->second;
             if(x > 0) {res = "RIGHT"; bot2.first ++;break;}
@@ -185,7 +201,7 @@ int main()
             pos[0] --;
         }
         
-        std::cout<<status<<std::endl;
+        //std::cout<<status<<std::endl;
         status = next_move(pos[0], pos[1], dim[0], dim[1], board);
     } 
     return 0;
