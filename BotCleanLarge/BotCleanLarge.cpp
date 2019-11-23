@@ -4,138 +4,153 @@
 #include <string>
 #include <set>
 #include<algorithm>
-
+#include<random>
 
 using namespace std;
 
-typedef pair<int,int> Point;
-inline int dist(Point p1, Point p2){return (p2.first - p1.first) * (p2.first - p1.first) + (p2.second - p1.second) * (p2.second - p1.second);}
+struct Point{
+    int x;
+    int y;
+    Point(int xx, int yy) : x(xx), y(yy){}
+};
+inline int dist(const Point& p1, const Point& p2){return (p2.x - p1.x) * (p2.x - p1.x) + (p2.y - p1.y) * (p2.y - p1.y);}
 
-vector<int> optimalPartition(int sublengh, int length){
-    int n = length / sublengh;
-    auto res = vector<int>(n,sublengh);
-    for(int r = length % sublengh;r>0;--r, res[r%n] ++);
-    return res;
-}
-
-/*vector<Point> DevideIntoZones(int zwidth, int zheight, int width, int height){
-    auto
-}*/
-class FindShortestWay{
-    public:
-    set<Point> OffPathPoints;
-    list<Point> OnPathPoints;
-    vector<string> Path;
-
-    void CreateBlankDrawing();
-
-    void drawPoint(Point p, string str);
-
-    void Draw(Point botpoint);
-
-    FindShortestWay(const set<Point>& points){
-        OffPathPoints = points;
-        CreateBlankDrawing();
-    }
-
-    void findShortestPath(){
-        int pathLength = 0;
-        for(auto it=OnPathPoints.begin(), next_it = ++OnPathPoints.begin(); it != OnPathPoints.end(); ++ it, ++next_it){
-            if(next_it == OnPathPoints.end()) next_it = OnPathPoints.begin();
-            pathLength += dist(*it,*next_it);
+  vector<string> createBlankDrawing(const list<Point>& points){
+        int maxX = 0;
+        int maxY = 0;
+        for(auto it = points.begin(); it != points.end(); ++ it){
+            if(maxX < it->x) maxX = it->x;
+            if(maxY < it->y) maxY = it->y;
         }
-        for(;OffPathPoints.size() != 0;){
-            int min_len = 1000000000;
-            auto min_it = OffPathPoints.begin();
-            auto min_jt = OnPathPoints.begin();
-            for(auto it = OffPathPoints.begin(); it != OffPathPoints.end(); ++ it){
-                for(auto jt=OnPathPoints.begin(), next_jt = ++OnPathPoints.begin(); jt != OnPathPoints.end(); ++ jt, ++next_jt){
-                    if(next_jt == OnPathPoints.end()) next_jt = OnPathPoints.begin();
-                    auto len = pathLength - dist(*jt,*next_jt) + dist(*jt,*it) + dist(*next_jt,*it);
-                    if(len < min_len) min_len = len, min_jt = next_jt, min_it = it;
-                }
+        maxX = 2 * (maxX + 2);
+        maxY = 2 * (maxY + 2);
+        vector<string> res = vector<string>();
+        res.resize(maxY);
+        for(unsigned int i = 0; i < maxY; ++ i){
+            for(int j = 0; j < maxX; ++ j){
+                res[i] += '-';
             }
-            pathLength = min_len;
-            OnPathPoints.insert(min_jt, *min_it);
-            OffPathPoints.erase(min_it);
         }
+        return res;
     }
 
-    bool findConvexHull(){
-        auto p0 = OnPathPoints.back();
-        auto p1 = OnPathPoints.front();
-        if(p0 == p1) p1 = *OffPathPoints.begin();
-        for(auto it = OffPathPoints.begin(); it != OffPathPoints.end(); ++ it ){
-            int sign = (p1.first - p0.first) * (it->second - p0.second) - (p1.second - p0.second)*(it->first - p0.first); 
-            if(sign > 0 || 
-                ((sign == 0) && (dist(p0,p1) > dist(p0,*it)))) p1 = *it;
-        }
-        if(p1 == OnPathPoints.front()) return true;
-        OnPathPoints.push_back(p1);
-        OffPathPoints.erase(p1);
-        return false;
+    void drawPoint(Point p, string str, vector<string>& path){
+        p.x = 2 * (p.x + 1);
+        p.y = 2 * (p.y + 1);
+        path[p.y][p.x] = str[0];
+        path[p.y][p.x + 1] = str[1];
     }
+
+    void Draw(Point botpoint, const list<Point>& OnPathPoints){
+        std::cout<<"********************************************************"<<std::endl;
+        auto Path = createBlankDrawing(OnPathPoints);
+        int order = 0;
+
+        for(auto it = OnPathPoints.begin(); it != OnPathPoints.end(); ++ it){
+            auto p = *it;
+            auto num = to_string(order);
+            if(num.length()==1) num = "0" + num;
+            drawPoint(p,num,Path);
+            order ++;
+        }
+        drawPoint(botpoint,"BB",Path);
+        for(unsigned int i = 0; i < Path.size(); ++ i){
+            for(int j = 0; j < Path[0].size(); ++ j){
+                std::cout << Path[i][j];
+            }
+            std::cout<<std::endl;
+        }
+        std::cout<<std::endl;
+    }
+
+struct DP{
+    int prev;
+    int dist;
+    DP(int _prev, int _dist) : prev(_prev), dist(_dist){}
 };
 
 string next_move(int posr, int posc, int dimh, int dimw, vector <string> board) {
     
-    if(board[posr][posc] == 'd') {
-        //cout << "CLEAN" <<std::endl;
-        return "CLEAN";
-    }
-    auto pset = set<Point>();
-    auto bot = Point(posc,posr);
-    pset.insert(bot);
+    if(board[posr][posc] == 'd') return "CLEAN";
+    Point bot = Point(posc, posr);
+    vector<Point> points = vector<Point>();
+    points.reserve(2500);
     for(int i = 0; i < dimh; ++ i){
         for(int j = 0; j < dimw; ++ j){
-            if(board[i][j] == 'd')  pset.insert(Point(j,i));
-        }
-    }
-
-    cout<<pset.size()<<std::endl;
-    
-    if(pset.size() == 1) return "EMPTY";
-    FindShortestWay path = FindShortestWay(pset);
-    auto min_it = std::min_element(path.OffPathPoints.begin(), path.OffPathPoints.end());
-    path.OffPathPoints.erase(min_it);
-    path.OnPathPoints.push_back(*min_it);
-    for(;path.findConvexHull() == false;);
-    path.findShortestPath();
-    //path.Draw(bot);
-    string res = "EMPTY";
-    int min_dist = 1000000000;
-    int min_id = -1;
-    Point bot2 = bot;
-    for(auto it = path.OnPathPoints.begin(); it != path.OnPathPoints.end(); ++ it){
-        if(*it == bot){
-            auto next_it = it;
-            auto prev_it = it;
-            next_it ++;
-            if(next_it == path.OnPathPoints.end()) next_it = path.OnPathPoints.begin();
-            if(prev_it == path.OnPathPoints.begin()) prev_it = -- path.OnPathPoints.end();
-            else prev_it --;
-            auto dist_next = dist(*it,*next_it);
-            auto dist_prev = dist(*it,*prev_it);
-            auto point = (dist_next > dist_prev) ? *prev_it : *next_it;
-            if(dist_next == dist_prev){
-                if(prev_it->first == next_it->first) point = (next_it->second > prev_it->second) ? *prev_it : *next_it;
-                else point = (next_it->first > prev_it->first) ? *prev_it : *next_it;
+            if(board[i][j] == 'd'){
+                points.push_back(Point(j,i));    
             }
-            int x = point.first - it->first;
-            int y = point.second - it->second;
-            if(x > 0) {res = "RIGHT"; bot2.first ++;break;}
-            if(x < 0) {res = "LEFT"; bot2.first --;break;}
-            if(y > 0) {res = "DOWN"; bot2.second ++;break;}
-            if(y < 0) {res = "UP"; bot2.second --;break;}
-            // if(x > 0) cout << "RIGHT" << std::endl;
-            // if(x < 0) cout << "LEFT" << std::endl;
-            // if(y > 0) cout << "DOWN" << std::endl;
-            // if(y < 0) cout << "UP" << std::endl;
-            //return;
         }
     }
-    
-    return res;
+    int cnt = points.size();
+    auto p = points[0];
+    if(cnt > 1){
+        std::cout<< cnt << std::endl;
+        auto dp = vector<vector<DP>>();
+        for(int i = 0; i < cnt; ++ i){
+            dp.push_back(vector<DP>(cnt,DP(-1,std::numeric_limits<int>::max())));
+        }
+
+        for(int i = 0; i < cnt; ++ i) dp[0][i].dist = dist(bot,points[i]);
+        auto flags = vector<int>(cnt,-1);
+        for(int i = 1; i < cnt; ++ i){
+            std::fill(flags.begin(),flags.end(),-1);
+            for(int j = 0; j < cnt; ++ j){
+                if(i == 1 || dp[i - 1][j].prev >= 0){
+                    int m = j;
+                    for(int k = i - 1;k >= 0; -- k) {flags[m] = j; m = dp[k][m].prev;}
+                    for(int k = 0; k < cnt; ++ k){
+                        if(flags[k] != j){
+                            int dd = dp[i-1][j].dist + dist(points[j],points[k]);
+                            if(dp[i][k].dist > dd){
+                                dp[i][k].dist = dd;
+                                dp[i][k].prev = j;
+                            } 
+                            if(dd == dp[i][k].dist){
+                                if(std::rand() % 2){
+                                    dp[i][k].dist = dd;
+                                    dp[i][k].prev = j; 
+                                }
+                            }
+                        }
+                    }
+                }
+            }   
+        }
+        int min_dist = std::numeric_limits<int>::max();
+        int k_min = -1;
+        for(int i = 0; i < cnt; ++ i){
+            if(min_dist > dp[cnt-1][i].dist){
+                k_min = i;
+                min_dist = dp[cnt-1][i].dist;
+            }
+        }
+
+        list<Point> path = list<Point>();
+        path.push_front(points[k_min]);
+        for(int i = cnt - 1; i > 0; -- i){
+            k_min = dp[i][k_min].prev; 
+            path.push_front(points[k_min]);
+        }
+        p = points[k_min];
+        //Draw(bot, path);
+    }
+    if(bot.x == p.x){
+        if(bot.y < p.y) return "DOWN";
+        if(bot.y > p.y) return "UP";
+    }
+    if(bot.y == p.y){
+        if(bot.x < p.x) return "RIGHT";
+        if(bot.x > p.x) return "LEFT";
+    }
+    if(std::rand() % 2){
+        if(bot.x < p.x) return "RIGHT";
+        if(bot.x > p.x) return "LEFT";
+    } else{
+        if(bot.y < p.y) return "DOWN";
+        if(bot.y > p.y) return "UP";
+    }
+    return "EMPTY";
 }
 
 
@@ -158,12 +173,6 @@ int main()
     board[3] = "--d--";
     board[4] = "----d";
 
-    /*pos[1] = 0;
-    board[0] = "-d---";
-    board[1] = "-d---";
-    board[2] = "---d-";
-    board[3] = "---d-";
-    board[4] = "--d-d";*/
     dim[0] = 17;
     dim[1] = 46;
     board.resize(17);
@@ -184,7 +193,18 @@ int main()
     board[14] = "--d-ddd------ddddd-d-d-ddddd-d-d--d--dddd--dd-";
     board[15] = "-d--d--d---d--d--d--d---d--d---d--d----d--d--d";
     board[16] = "--dd-dddddddddddddddddd--d-ddd------ddddd-d-d-";
+
+    /*pos[1] = 0;
+    board.resize(5);
+    board[0] = "-d---";
+    board[1] = "-d---";
+    board[2] = "---d-";
+    board[3] = "---d-";
+    board[4] = "--d-d";*/
+    
+   int ff = 0;
     for(auto status = next_move(pos[0], pos[1], dim[0], dim[1], board); status != "EMPTY";){
+        ff ++;
         if(status == "CLEAN"){
             board[pos[0]][pos[1]] = '-';
         }
@@ -201,61 +221,15 @@ int main()
             pos[0] --;
         }
         
-        //std::cout<<status<<std::endl;
+        std::cout<<status<<std::endl;
         status = next_move(pos[0], pos[1], dim[0], dim[1], board);
     } 
+    std::cout << "Total number of points = "<< dim[0] * dim[1] << std::endl;
+    std::cout << "Number of moves = " << ff << std::endl;
     return 0;
 }
 
 
-    void FindShortestWay::CreateBlankDrawing(){
-        int maxX = 0;
-        int maxY = 0;
-        for(auto it = OffPathPoints.begin(); it != OffPathPoints.end(); ++ it){
-            if(maxX < it->first) maxX = it->first;
-            if(maxY < it->second) maxY = it->second;
-        }
-        maxX = 2 * (maxX + 2);
-        maxY = 2 * (maxY + 2);
-        Path.resize(maxY);
-        for(unsigned int i = 0; i < maxY; ++ i){
-            for(int j = 0; j < maxX; ++ j){
-                Path[i] += '-';
-            }
-        }
-    }
 
-    void FindShortestWay::drawPoint(Point p, string str){
-        p.first = 2 * (p.first + 1);
-        p.second = 2 * (p.second + 1);
-        Path[p.second][p.first] = str[0];
-        Path[p.second][p.first + 1] = str[1];
-    }
-
-    void FindShortestWay::Draw(Point botpoint){
-        std::cout<<"********************************************************"<<std::endl;
-        for(unsigned int i = 0; i < Path.size(); ++ i){
-            for(int j = 0; j < Path[0].size(); ++ j){
-                Path[i][j] = '-';
-            }
-        }
-        int order = 0;
-
-        for(auto it = OnPathPoints.begin(); it != OnPathPoints.end(); ++ it){
-            auto p = *it;
-            auto num = to_string(order);
-            if(num.length()==1) num = "0" + num;
-            drawPoint(p,num);
-            order ++;
-        }
-        //drawPoint(botpoint,"BB");
-        for(unsigned int i = 0; i < Path.size(); ++ i){
-            for(int j = 0; j < Path[0].size(); ++ j){
-                std::cout << Path[i][j];
-            }
-            std::cout<<std::endl;
-        }
-        std::cout<<std::endl;
-    }
 
 
