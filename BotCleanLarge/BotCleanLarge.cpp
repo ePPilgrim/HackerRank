@@ -26,23 +26,25 @@ string next_move(int posr, int posc, int dimh, int dimw, vector <string> board) 
         path.push_back(points[*it]);
     }
 
-    //Draw(bot, path);
-    auto p = path[0];
-    
-    if(bot.x == p.x){
-        if(bot.y < p.y) return "DOWN";
-        if(bot.y > p.y) return "UP";
-    }
-    if(bot.y == p.y){
-        if(bot.x < p.x) return "RIGHT";
-        if(bot.x > p.x) return "LEFT";
-    }
-    if(std::rand() % 2){
-        if(bot.x < p.x) return "RIGHT";
-        if(bot.x > p.x) return "LEFT";
-    } else{
-        if(bot.y < p.y) return "DOWN";
-        if(bot.y > p.y) return "UP";
+    if(path.size() > 0){
+        Draw(bot, path);
+        auto p = path[0];
+        
+        if(bot.x == p.x){
+            if(bot.y < p.y) return "DOWN";
+            if(bot.y > p.y) return "UP";
+        }
+        if(bot.y == p.y){
+            if(bot.x < p.x) return "RIGHT";
+            if(bot.x > p.x) return "LEFT";
+        }
+        if(std::rand() % 2){
+            if(bot.x < p.x) return "RIGHT";
+            if(bot.x > p.x) return "LEFT";
+        } else{
+            if(bot.y < p.y) return "DOWN";
+            if(bot.y > p.y) return "UP";
+        }
     }
     return "EMPTY";
 }
