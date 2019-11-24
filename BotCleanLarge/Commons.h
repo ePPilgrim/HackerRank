@@ -13,6 +13,17 @@ struct Point{
     int x;
     int y;
     Point(int xx, int yy) : x(xx), y(yy){}
+    Point() {x = y = -1;}
+};
+
+struct Region{
+    Point p;
+    int w;
+    int h;
+    Region(int xx = -1, int yy = -1, int ww = 0, int hh = 0) : p(Point(xx,yy)), w(ww), h(hh){}
+    bool IsPointInside(const Point& pp){
+        return (pp.x < p.x + w) && (pp.x >= p.x) && (pp.y < p.y + h) && (pp.y >= p.y);  
+    }
 };
 
 struct DP{

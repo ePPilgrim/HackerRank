@@ -1,5 +1,7 @@
 #include "DPStrategy.h"
 #include "HDStrategy.h"
+#include "ShortestDistanceStrategy.h"
+#include "RegionStrategy.h"
 #include <set>
 #include<algorithm>
 #include<random>
@@ -10,44 +12,32 @@ string next_move(int posr, int posc, int dimh, int dimw, vector <string> board) 
     
     if(board[posr][posc] == 'd') return "CLEAN";
     Point bot = Point(posc, posr);
-    vector<Point> points = vector<Point>();
-    points.reserve(2500);
-    for(int i = 0; i < dimh; ++ i){
-        for(int j = 0; j < dimw; ++ j){
-            if(board[i][j] == 'd'){
-                points.push_back(Point(j,i));    
-            }
-        }
-    }
-    auto pStrategy = DPStrategy();
-    //auto pStrategy = HDStrategy();
-    auto llist = pStrategy.FindOptimalPath(points, bot);
+    float globalThreshold = 0.3f;
+    float localThreshold = 0.5f;
+    NextPointStrategy* sparseStrategy = new DPStrategy();
+    NextPointStrategy* densStrategy = new HDStrategy();
+    auto partition = RegionStrategy(localThreshold, globalThreshold, 
+                                    sparseStrategy, densStrategy,
+                                    board, bot);
+    Point p = partition.FindNextPoint(10,10);
+    if(p.x < 0) return "EMPTY";
 
-    auto path = vector<Point>();
-    for(auto it = llist.begin(); it != llist.end(); ++ it){
-        path.push_back(points[*it]);
+    if(bot.x == p.x){
+        if(bot.y < p.y) return "DOWN";
+        if(bot.y > p.y) return "UP";
     }
-
-    if(path.size() > 0){
-        //Draw(bot, path);
-        auto p = path[0];
-        
-        if(bot.x == p.x){
-            if(bot.y < p.y) return "DOWN";
-            if(bot.y > p.y) return "UP";
-        }
-        if(bot.y == p.y){
-            if(bot.x < p.x) return "RIGHT";
-            if(bot.x > p.x) return "LEFT";
-        }
-        if(std::rand() % 2){
-            if(bot.x < p.x) return "RIGHT";
-            if(bot.x > p.x) return "LEFT";
-        } else{
-            if(bot.y < p.y) return "DOWN";
-            if(bot.y > p.y) return "UP";
-        }
+    if(bot.y == p.y){
+        if(bot.x < p.x) return "RIGHT";
+        if(bot.x > p.x) return "LEFT";
     }
+    if(std::rand() % 2){
+        if(bot.x < p.x) return "RIGHT";
+        if(bot.x > p.x) return "LEFT";
+    } else{
+        if(bot.y < p.y) return "DOWN";
+        if(bot.y > p.y) return "UP";
+    }
+    
     return "EMPTY";
 }
 
@@ -75,26 +65,59 @@ int main()
     dim[1] = 46;
     pos[0] = 8;
     pos[1] = 22;
-    board.resize(17);
+    board.resize(34);
     board[0] = "-d--d---d--d----d--d--d-d--d---d--d----d--d--d";
     board[1] = "-d--d--d---d--d--d--d---d--d---d--d----d--d--d";
     board[2] = "--dd-dddddddddddddddddd--d-ddd------ddddd-d-d-";
     board[3] = "--d-ddd------ddddd-d-d-ddddd-d-d--d--dddd--dd-";
-    board[4] = "ddddd-d-d--d--dddd--dd---dd-dddddddddddddddddd";
+    board[4] = "ddddd-d-d--d--dddd--dd---dd-ddddd---ddd--ddddd";
     board[5] = "--dd-dddddddddddddddddd--d-ddd------ddddd-d-d-";
     board[6] = "--d-ddd------ddddd-d-d-ddddd-d-d--d--dddd--dd-";
     board[7] = "-d--d--d---d--d--d--d---d--d---d--d----d--d--d";
-    board[8] = "--dd-dddddddddddddddddd--d-ddd------ddddd-d-d-";
+    board[8] = "--dd-dddddd-ddddddd-ddd--d-ddd------ddddd-d-d-";
     board[9] = "--d-ddd------ddddd-d-d-ddddd-d-d--d--dddd--dd-";
-    board[10] = "ddddd-d-d--d--dddd--dd---dd-dddddddddddddddddd";
+    board[10] = "ddddd-d-d--d--dddd--dd---dd-dddd-dd-dd-ddddddd";
     board[11] = "-d--d---d--d----d--d--d-d--d---d--d----d--d--d";
-    board[12] = "ddddd-d-d--d--dddd--dd---dd-dddddddddddddddddd";
-    board[13] = "--dd-dddddddddddddddddd--d-ddd------ddddd-d-d-";
+    board[12] = "ddddd-d-d--d--dddd--dd---dd-ddddddddddd-dddddd";
+    board[13] = "--dd-ddddd---dddddddddd--d-ddd------ddddd-d-d-";
     board[14] = "--d-ddd------ddddd-d-d-ddddd-d-d--d--dddd--dd-";
     board[15] = "-d--d--d---d--d--d--d---d--d---d--d----d--d--d";
     board[16] = "--dd-dddddddddddddddddd--d-ddd------ddddd-d-d-";
+    board[17] = "-d--d---d--d----d--d--d-d--d---d--d----d--d--d";
+    board[18] = "-d--d--d---d--d--d--d---d--d---d--d----d--d--d";
+    board[19] = "--dd-dddddddd-ddddddddd--d-ddd------ddddd-d-d-";
+    board[20] = "--d-ddd------ddddd-d-d-ddddd-d-d--d--dddd--dd-";
+    board[21] = "ddddd-d-d--d--dddd--dd---dd-dddddddddddddddddd";
+    board[22] = "--dd-dddddddddddddddddd--d-ddd------ddddd-d-d-";
+    board[23] = "--d-ddd------ddddd-d-d-ddddd-d-d--d--dddd--dd-";
+    board[24] = "-d--d--d---d--d--d--d---d--d---d--d----d--d--d";
+    board[25] = "--dd-dddddddddddddddddd--d-ddd------ddddd-d-d-";
+    board[26] = "--d-ddd------ddddd-d-d-ddddd-d-d--d--dddd--dd-";
+    board[27] = "ddddd-d-d--d--dddd--dd---dd-dddddddddddddddddd";
+    board[28] = "-d--d---d--d----d--d--d-d--d---d--d----d--d--d";
+    board[29] = "ddddd-d-d--d--dddd--dd---dd-dddddddddddddddddd";
+    board[30] = "--dd-dddddddddddddddddd--d-ddd------ddddd-d-d-";
+    board[31] = "--d-ddd------ddddd-d-d-ddddd-d-d--d--dddd--dd-";
+    board[32] = "-d--d--d---d--d--d--d---d--d---d--d----d--d--d";
+    board[33] = "--dd-dddddddddddddddddd--d-ddd------ddddd-d-d-";
 
-    /*pos[1] = 0;
+
+    dim[0] = 50;
+    dim[1] = 50;
+    pos[0] = 33;
+    pos[1] = 45;
+    board = vector<string>(50);
+    for(int i = 0; i < 50; i ++){
+        for(int j = 0; j < 50; ++ j){
+            char ch = (rand()%2) ? '-' : 'd';
+            board[i].push_back(ch);
+        }
+    }
+
+    /*dim[0] = 5;
+    dim[1] = 5;
+    pos[0] = 0;
+    pos[1] = 0;
     board.resize(5);
     board[0] = "-d---";
     board[1] = "-d---";
