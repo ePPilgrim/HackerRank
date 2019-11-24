@@ -5,23 +5,34 @@
 #include <set>
 #include<algorithm>
 #include<random>
+#include<ctime>
 
 using namespace std;
+
+int cccc = 0;
 
 string next_move(int posr, int posc, int dimh, int dimw, vector <string> board) {
     
     if(board[posr][posc] == 'd') return "CLEAN";
     Point bot = Point(posc, posr);
-    float globalThreshold = 0.3f;
+    float globalThreshold = 0.05f;
     float localThreshold = 0.5f;
     NextPointStrategy* sparseStrategy = new DPStrategy();
     NextPointStrategy* densStrategy = new HDStrategy();
+    //NextPointStrategy* densStrategy = new ShortestDistanceStrategy();
+    //NextPointStrategy* sparseStrategy = new ShortestDistanceStrategy();
+    auto ttt = time(NULL);
+    auto t1 = std::clock();
+    
+    std::cout<< "Time = "<<ttt<<std::endl;
+    //srand (cccc);
+    //cccc += 13;
     auto partition = RegionStrategy(localThreshold, globalThreshold, 
                                     sparseStrategy, densStrategy,
                                     board, bot);
-    Point p = partition.FindNextPoint(10,10);
+    Point p = partition.FindNextPoint(11,11);
     if(p.x < 0) return "EMPTY";
-
+    
     if(bot.x == p.x){
         if(bot.y < p.y) return "DOWN";
         if(bot.y > p.y) return "UP";
@@ -61,17 +72,17 @@ int main()
     board[3] = "--d--";
     board[4] = "----d";
 
-    dim[0] = 17;
+    dim[0] = 34;
     dim[1] = 46;
     pos[0] = 8;
     pos[1] = 22;
     board.resize(34);
     board[0] = "-d--d---d--d----d--d--d-d--d---d--d----d--d--d";
     board[1] = "-d--d--d---d--d--d--d---d--d---d--d----d--d--d";
-    board[2] = "--dd-dddddddddddddddddd--d-ddd------ddddd-d-d-";
+    board[2] = "--dd-ddddddd-dddddddddd--d-ddd------ddddd-d-d-";
     board[3] = "--d-ddd------ddddd-d-d-ddddd-d-d--d--dddd--dd-";
     board[4] = "ddddd-d-d--d--dddd--dd---dd-ddddd---ddd--ddddd";
-    board[5] = "--dd-dddddddddddddddddd--d-ddd------ddddd-d-d-";
+    board[5] = "--dd-dddddddd-ddddddddd--d-ddd------ddddd-d-d-";
     board[6] = "--d-ddd------ddddd-d-d-ddddd-d-d--d--dddd--dd-";
     board[7] = "-d--d--d---d--d--d--d---d--d---d--d----d--d--d";
     board[8] = "--dd-dddddd-ddddddd-ddd--d-ddd------ddddd-d-d-";
@@ -87,19 +98,19 @@ int main()
     board[18] = "-d--d--d---d--d--d--d---d--d---d--d----d--d--d";
     board[19] = "--dd-dddddddd-ddddddddd--d-ddd------ddddd-d-d-";
     board[20] = "--d-ddd------ddddd-d-d-ddddd-d-d--d--dddd--dd-";
-    board[21] = "ddddd-d-d--d--dddd--dd---dd-dddddddddddddddddd";
-    board[22] = "--dd-dddddddddddddddddd--d-ddd------ddddd-d-d-";
+    board[21] = "ddddd-d-d--d--dddd--dd---dd-dd----------dddddd";
+    board[22] = "--dd-ddddd--ddddddddddd--d-ddd------ddddd-d-d-";
     board[23] = "--d-ddd------ddddd-d-d-ddddd-d-d--d--dddd--dd-";
     board[24] = "-d--d--d---d--d--d--d---d--d---d--d----d--d--d";
-    board[25] = "--dd-dddddddddddddddddd--d-ddd------ddddd-d-d-";
+    board[25] = "--dd-dddddddddd----dddd--d-ddd------ddddd-d-d-";
     board[26] = "--d-ddd------ddddd-d-d-ddddd-d-d--d--dddd--dd-";
     board[27] = "ddddd-d-d--d--dddd--dd---dd-dddddddddddddddddd";
     board[28] = "-d--d---d--d----d--d--d-d--d---d--d----d--d--d";
-    board[29] = "ddddd-d-d--d--dddd--dd---dd-dddddddddddddddddd";
-    board[30] = "--dd-dddddddddddddddddd--d-ddd------ddddd-d-d-";
+    board[29] = "ddddd-d-d--d--dddd--dd---dd-ddddd-----dddddddd";
+    board[30] = "--dd-ddddddd---dddddddd--d-ddd------ddddd-d-d-";
     board[31] = "--d-ddd------ddddd-d-d-ddddd-d-d--d--dddd--dd-";
     board[32] = "-d--d--d---d--d--d--d---d--d---d--d----d--d--d";
-    board[33] = "--dd-dddddddddddddddddd--d-ddd------ddddd-d-d-";
+    board[33] = "--dd-dddddddd--dddddddd--d-ddd------ddddd-d-d-";
 
 
     dim[0] = 50;
@@ -107,12 +118,24 @@ int main()
     pos[0] = 33;
     pos[1] = 45;
     board = vector<string>(50);
+    int TotalNumberOfDPoint = 0;
     for(int i = 0; i < 50; i ++){
         for(int j = 0; j < 50; ++ j){
-            char ch = (rand()%2) ? '-' : 'd';
+            char ch = '-';//(rand()%2) ? '-' : 'd';
             board[i].push_back(ch);
         }
     }
+
+    TotalNumberOfDPoint = 300;
+    for(int i = TotalNumberOfDPoint; i >= 0; -- i){
+        int y = (i + rand()) % 47;
+        int x = (y * y + rand()) % 47;
+        board[y][x] = 'd';
+    }
+    for(int i = 0; i < 50; ++ i){
+        std::cout<<board[i] << std::endl;
+    }
+
 
     /*dim[0] = 5;
     dim[1] = 5;
@@ -152,6 +175,7 @@ int main()
     } 
     std::cout << "Total number of points = "<< dim[0] * dim[1] << std::endl;
     std::cout << "Number of moves = " << ff << std::endl;
+    std::cout << "Portion of moves = " << (float)ff/(float)TotalNumberOfDPoint<<std::endl;
     return 0;
 }
 

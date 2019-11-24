@@ -23,18 +23,21 @@ class RegionStrategy
     Bot(bot){}
 
     Point FindNextPoint(int minX, int minY){
-        auto points = FindPointInRegion(Region(0,0,Board[0].length(), Board.size()));
-        std::cout<< points.size() << std::endl;
+        int cnt = FindCount(Region(0,0,Board[0].length(), Board.size()));
+        std::vector<Point> points = std::vector<Point>();
         int index = -1;
-        if(points.size() == 0) return Point();
-        if(points.size() == 1){
-            index = 0;
+        std::cout<< cnt << std::endl;
+        if(cnt == 0) return Point();
+        if(cnt == 1){
+            points = FindPointInRegion(Region(0,0,Board[0].length(), Board.size()));
+            index = 0; 
         }
-        else if(FindCover(points.size(), Board[0].length(), Board.size()) <= GlobalThreshold){
+        else if(FindCover(cnt, Board[0].length(), Board.size()) <= GlobalThreshold){
+            points = FindPointInRegion(Region(0,0,Board[0].length(), Board.size()));
             index = *SparseExplorer->FindOptimalPath(points,Bot).begin();
         }else{
             DoPartitionOnBoard(minX, minY);
-            if(Regions.size() == 0){
+            if(IsRegionActive(BotReg)){
                 points = FindPointInRegion(BotReg);
                 if(FindCover(points.size(),  BotReg.h, BotReg.w) <= LocalThreshold){
                     index = *SparseExplorer->FindOptimalPath(points,Bot).begin();    
@@ -46,7 +49,8 @@ class RegionStrategy
                 points = std::vector<Point>();
                 points.reserve(100);
                 for(auto it = Regions.begin(); it != Regions.end(); ++ it){
-                    points.push_back(Point(it->p.x + (it->w/2), it->p.y + (it->h/2)));
+                    if(IsRegionActive(*it))
+                        points.push_back(Point(it->p.x + (it->w/2), it->p.y + (it->h/2)));
                 }
                 index = *SparseExplorer->FindOptimalPath(points,Bot).begin(); 
             }
@@ -66,6 +70,25 @@ class RegionStrategy
             for(int x = reg.p.x; x < w; ++ x) if(Board[y][x] == 'd') res->push_back(Point(x,y));
         }
         return *res;
+    }
+
+    int FindCount(const Region& reg){
+        int cnt = 0;
+        for(int i = reg.p.y; i < reg.p.y + reg.h; ++ i){
+            for(int j = reg.p.x; j < reg.p.x + reg.w; ++ j){
+                if(Board[i][j] == 'd') cnt ++;
+            }
+        }
+        return cnt;
+    }
+
+    bool IsRegionActive(const Region& reg){
+        for(int i = reg.p.y; i < reg.p.y + reg.h; ++ i){
+            for(int j = reg.p.x; j < reg.p.x + reg.w; ++ j){
+                if(Board[i][j] == 'd') return true;
+            }
+        }
+        return false;
     }
 
     void DoPartitionOnBoard(int minX, int minY){
@@ -90,22 +113,18 @@ class RegionStrategy
             }
         }
         int x,y = 0;
-        int botix = -1;
         for(int i = 0; i < Ypartition.size(); ++ i){
             x = 0;
             for(int j = 0; j < Xpartition.size(); ++ j){
                 auto rreg = Region(x,y,Xpartition[j], Ypartition[i]);
-                auto cnt = FindPointInRegion(rreg).size();
-                if(cnt != 0) Regions.push_back(rreg);
+                Regions.push_back(rreg);
                 if(rreg.IsPointInside(Bot)){
                     BotReg = rreg;
-                    if(cnt != 0) botix = cnt - 1;
                 }
                 x += Xpartition[j];
             }
             y += Ypartition[i];
         }
-        if(botix >= 0) Regions.clear();
     }
 
 
