@@ -1,4 +1,5 @@
 #include "DPStrategy.h"
+#include "HDStrategy.h"
 #include <set>
 #include<algorithm>
 #include<random>
@@ -19,6 +20,7 @@ string next_move(int posr, int posc, int dimh, int dimw, vector <string> board) 
         }
     }
     auto pStrategy = DPStrategy();
+    //auto pStrategy = HDStrategy();
     auto llist = pStrategy.FindOptimalPath(points, bot);
 
     auto path = vector<Point>();
@@ -27,7 +29,7 @@ string next_move(int posr, int posc, int dimh, int dimw, vector <string> board) 
     }
 
     if(path.size() > 0){
-        Draw(bot, path);
+        //Draw(bot, path);
         auto p = path[0];
         
         if(bot.x == p.x){
@@ -69,10 +71,10 @@ int main()
     board[3] = "--d--";
     board[4] = "----d";
 
-    //dim[0] = 17;
-    //dim[1] = 46;
-    //pos[0] = 8;
-    //pos[1] = 22;
+    dim[0] = 17;
+    dim[1] = 46;
+    pos[0] = 8;
+    pos[1] = 22;
     board.resize(17);
     board[0] = "-d--d---d--d----d--d--d-d--d---d--d----d--d--d";
     board[1] = "-d--d--d---d--d--d--d---d--d---d--d----d--d--d";
@@ -92,13 +94,13 @@ int main()
     board[15] = "-d--d--d---d--d--d--d---d--d---d--d----d--d--d";
     board[16] = "--dd-dddddddddddddddddd--d-ddd------ddddd-d-d-";
 
-    pos[1] = 0;
+    /*pos[1] = 0;
     board.resize(5);
     board[0] = "-d---";
     board[1] = "-d---";
     board[2] = "---d-";
     board[3] = "---d-";
-    board[4] = "--d-d";
+    board[4] = "--d-d";*/
     
    int ff = 0;
     for(auto status = next_move(pos[0], pos[1], dim[0], dim[1], board); status != "EMPTY";){

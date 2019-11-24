@@ -1,3 +1,6 @@
+#ifndef COMMONS_H
+#define COMMONS_H
+
 #include <iostream>
 #include <vector>
 #include<list>
@@ -67,3 +70,5 @@ inline void Draw(Point botpoint, const vector<Point>& OnPathPoints){
     }
     cout<<std::endl;
 }
+
+#endif
