@@ -6,6 +6,7 @@
 #include<list>
 #include <string>
 #include <algorithm>
+#include <set>
 
 using namespace std;
 
@@ -14,6 +15,9 @@ struct Point{
     int y;
     Point(int xx, int yy) : x(xx), y(yy){}
     Point() {x = y = -1;}
+    /*bool operator == (const Point& p){
+        return (x == p.x) && (y == p.y);
+    }*/
 };
 
 struct Region{

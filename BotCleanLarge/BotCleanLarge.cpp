@@ -2,6 +2,7 @@
 #include "HDStrategy.h"
 #include "ShortestDistanceStrategy.h"
 #include "RegionStrategy.h"
+#include "ConvexStrategy.h"
 #include <set>
 #include<algorithm>
 #include<random>
@@ -15,22 +16,22 @@ string next_move(int posr, int posc, int dimh, int dimw, vector <string> board) 
     
     if(board[posr][posc] == 'd') return "CLEAN";
     Point bot = Point(posc, posr);
-    float globalThreshold = 0.05f;
+    float globalThreshold = 0.0000500001f;
     float localThreshold = 0.5f;
     NextPointStrategy* sparseStrategy = new DPStrategy();
+    //NextPointStrategy* sparseStrategy = new ConvexStrategy();
     NextPointStrategy* densStrategy = new HDStrategy();
     //NextPointStrategy* densStrategy = new ShortestDistanceStrategy();
-    //NextPointStrategy* sparseStrategy = new ShortestDistanceStrategy();
-    auto ttt = time(NULL);
-    auto t1 = std::clock();
+   // auto ttt = time(NULL);
+    //auto t1 = std::clock();
     
-    std::cout<< "Time = "<<ttt<<std::endl;
+    //std::cout<< "Time = "<<ttt<<std::endl;
     //srand (cccc);
     //cccc += 13;
     auto partition = RegionStrategy(localThreshold, globalThreshold, 
                                     sparseStrategy, densStrategy,
                                     board, bot);
-    Point p = partition.FindNextPoint(11,11);
+    Point p = partition.FindNextPoint(5,5);
     if(p.x < 0) return "EMPTY";
     
     if(bot.x == p.x){
@@ -126,11 +127,16 @@ int main()
         }
     }
 
-    TotalNumberOfDPoint = 300;
-    for(int i = TotalNumberOfDPoint; i >= 0; -- i){
+    TotalNumberOfDPoint = 0;
+    int nn = 20;
+    for(int i = nn; i >= 0; -- i){
         int y = (i + rand()) % 47;
-        int x = (y * y + rand()) % 47;
-        board[y][x] = 'd';
+        int x = (y * y * y + rand()) % 47;
+        if(board[y][x] != 'd'){
+            board[y][x] = 'd';
+            TotalNumberOfDPoint ++;
+        }
+        
     }
     for(int i = 0; i < 50; ++ i){
         std::cout<<board[i] << std::endl;
@@ -173,7 +179,7 @@ int main()
         std::cout<<status<<std::endl;
         status = next_move(pos[0], pos[1], dim[0], dim[1], board);
     } 
-    std::cout << "Total number of points = "<< dim[0] * dim[1] << std::endl;
+    std::cout << "Total number of points = "<< TotalNumberOfDPoint << std::endl;
     std::cout << "Number of moves = " << ff << std::endl;
     std::cout << "Portion of moves = " << (float)ff/(float)TotalNumberOfDPoint<<std::endl;
     return 0;
