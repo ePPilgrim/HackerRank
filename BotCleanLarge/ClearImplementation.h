@@ -1,5 +1,9 @@
+#ifndef CLEARIMPLEMENTATION_H
+#define CLEARIMPLEMENTATION_H
+
 #include <vector>
 #include <algorithm>
+#include <string>
 
 using namespace std;
 
@@ -173,8 +177,9 @@ class RegionStrategy
         for(int i = 1; i < cnt; ++ i){
             std::fill(flags.begin(),flags.end(),-1);
             for(int j = 0; j < cnt; ++ j){
-                if(i == 1 || dp[i - 1][j].prev >= 0){
+                if((i == 1) || (dp[i - 1][j].prev >= 0)){
                     int m = j;
+                    flags[j] = j;
                     for(int k = i - 1;k >= 0; -- k) {flags[m] = j; m = dp[k][m].prev;}
                     for(int k = 0; k < cnt; ++ k){
                         if(flags[k] != j){
@@ -212,27 +217,32 @@ inline string next_move(int posr, int posc, int dimh, int dimw, vector <string> 
     if(board[posr][posc] == 'd') res = "CLEAN";
     else{
         int minS = 5;
-        float globalThreshold = 0.05f;
+        float globalThreshold = 0.00000005f;
         float localThreshold = 0.5f;
         Point bot = Point(posc, posr);
         auto partition = RegionStrategy(localThreshold, globalThreshold, minS);
         Point p = partition.FindNextPoint(board,bot);
+
+        if(p.x < 0 || p.y < 0) return "EMPTY";
     
         if(bot.x == p.x){
             res = "UP";
             if(bot.y < p.y) res = "DOWN";
         }
-        if(bot.y == p.y){
+        else if(bot.y == p.y){
             res = "LEFT";
-            if(bot.x < p.x) return "RIGHT";
+            if(bot.x < p.x) res = "RIGHT";
         }
-        if(std::rand() % 2){
-            res = "LEFT";
-            if(bot.x < p.x) return "RIGHT";
-        } else{
-            res = "UP";
-            if(bot.y < p.y) return "DOWN";
+        else{
+            if(std::rand() % 2){
+                res = "LEFT";
+                if(bot.x < p.x) res = "RIGHT";
+            } else{
+                res = "UP";
+                if(bot.y < p.y) res = "DOWN";
+            }
         }
     }
     return res;
 }
+#endif

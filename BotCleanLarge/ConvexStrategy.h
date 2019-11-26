@@ -1,3 +1,5 @@
+#ifndef CONVEXSTRATEGY_H
+//#define CONVEXSTRATEGY_H
 #include "NextPointStrategy.h"
 
 class ConvexStrategy : public NextPointStrategy{
@@ -94,3 +96,4 @@ class ConvexStrategy : public NextPointStrategy{
         return false;
     }
 };
+#endif

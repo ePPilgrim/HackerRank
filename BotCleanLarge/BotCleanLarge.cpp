@@ -1,23 +1,25 @@
-#include "DPStrategy.h"
+/*#include "DPStrategy.h"
 #include "HDStrategy.h"
 #include "ShortestDistanceStrategy.h"
 #include "RegionStrategy.h"
-#include "ConvexStrategy.h"
+#include "ConvexStrategy.h"//*/
 #include <set>
 #include<algorithm>
 #include<random>
 #include<ctime>
+#include <iostream>
+#include <string>
+#include "ClearImplementation.h"
 
 using namespace std;
 
-int cccc = 0;
 
-string next_move1(int posr, int posc, int dimh, int dimw, vector <string> board) {
+/*string next_move(int posr, int posc, int dimh, int dimw, vector <string> board) {
     
     if(board[posr][posc] == 'd') return "CLEAN";
     Point bot = Point(posc, posr);
-    float globalThreshold =1.0f;// 0.0000500001f;
-    float localThreshold = 1.0f;//0.5f;
+    float globalThreshold =0.0000500001f;
+    float localThreshold = 0.5f;
     NextPointStrategy* sparseStrategy = new DPStrategy();
     //NextPointStrategy* sparseStrategy = new ConvexStrategy();
     NextPointStrategy* densStrategy = new HDStrategy();
@@ -51,7 +53,7 @@ string next_move1(int posr, int posc, int dimh, int dimw, vector <string> board)
     }
     
     return "EMPTY";
-}
+}//*/
 
 
 
@@ -113,7 +115,7 @@ int main()
     board[31] = "--d-ddd------ddddd-d-d-ddddd-d-d--d--dddd--dd-";
     board[32] = "-d--d--d---d--d--d--d---d--d---d--d----d--d--d";
     board[33] = "--dd-dddddddd--dddddddd--d-ddd------ddddd-d-d-";
-
+*/
 
     dim[0] = 50;
     dim[1] = 50;
@@ -129,7 +131,7 @@ int main()
     }
 
     TotalNumberOfDPoint = 0;
-    int nn = 20;
+    int nn = 400;
     for(int i = nn; i >= 0; -- i){
         int y = (i + rand()) % 47;
         int x = (y * y * y + rand()) % 47;
@@ -156,7 +158,7 @@ int main()
     board[4] = "--d-d";*/
     
    int ff = 0;
-    for(auto status = next_move1(pos[0], pos[1], dim[0], dim[1], board); status != "EMPTY";){
+    for(auto status = next_move(pos[0], pos[1], dim[0], dim[1], board); status != "EMPTY";){
        
         if(status == "CLEAN"){
             board[pos[0]][pos[1]] = '-';
@@ -178,7 +180,7 @@ int main()
         }
         
         std::cout<<status<<std::endl;
-        status = next_move1(pos[0], pos[1], dim[0], dim[1], board);
+        status = next_move(pos[0], pos[1], dim[0], dim[1], board);
     } 
     std::cout << "Total number of points = "<< TotalNumberOfDPoint << std::endl;
     std::cout << "Number of moves = " << ff << std::endl;
