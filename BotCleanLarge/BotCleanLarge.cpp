@@ -12,12 +12,12 @@ using namespace std;
 
 int cccc = 0;
 
-string next_move(int posr, int posc, int dimh, int dimw, vector <string> board) {
+string next_move1(int posr, int posc, int dimh, int dimw, vector <string> board) {
     
     if(board[posr][posc] == 'd') return "CLEAN";
     Point bot = Point(posc, posr);
-    float globalThreshold = 0.0000500001f;
-    float localThreshold = 0.5f;
+    float globalThreshold =1.0f;// 0.0000500001f;
+    float localThreshold = 1.0f;//0.5f;
     NextPointStrategy* sparseStrategy = new DPStrategy();
     //NextPointStrategy* sparseStrategy = new ConvexStrategy();
     NextPointStrategy* densStrategy = new HDStrategy();
@@ -66,6 +66,7 @@ int main()
         string s;cin >> s;
         board.push_back(s);
     }*/
+    int TotalNumberOfDPoint = 7;
     board.resize(5);
     board[0] = "----d";
     board[1] = "-d--d";
@@ -73,7 +74,7 @@ int main()
     board[3] = "--d--";
     board[4] = "----d";
 
-    dim[0] = 34;
+    /*dim[0] = 34;
     dim[1] = 46;
     pos[0] = 8;
     pos[1] = 22;
@@ -119,7 +120,7 @@ int main()
     pos[0] = 33;
     pos[1] = 45;
     board = vector<string>(50);
-    int TotalNumberOfDPoint = 0;
+    TotalNumberOfDPoint = 0;
     for(int i = 0; i < 50; i ++){
         for(int j = 0; j < 50; ++ j){
             char ch = '-';//(rand()%2) ? '-' : 'd';
@@ -155,7 +156,7 @@ int main()
     board[4] = "--d-d";*/
     
    int ff = 0;
-    for(auto status = next_move(pos[0], pos[1], dim[0], dim[1], board); status != "EMPTY";){
+    for(auto status = next_move1(pos[0], pos[1], dim[0], dim[1], board); status != "EMPTY";){
        
         if(status == "CLEAN"){
             board[pos[0]][pos[1]] = '-';
@@ -177,7 +178,7 @@ int main()
         }
         
         std::cout<<status<<std::endl;
-        status = next_move(pos[0], pos[1], dim[0], dim[1], board);
+        status = next_move1(pos[0], pos[1], dim[0], dim[1], board);
     } 
     std::cout << "Total number of points = "<< TotalNumberOfDPoint << std::endl;
     std::cout << "Number of moves = " << ff << std::endl;
