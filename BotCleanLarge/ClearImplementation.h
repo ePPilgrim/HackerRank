@@ -202,51 +202,37 @@ class RegionStrategy
                 min_dist = dp[cnt-1][i].dist;
             }
         }
-
         for(int i = cnt - 1; i > 0; -- i) k_min = dp[i][k_min].prev; 
         return Points[k_min]; 
     }
-
-
 };
 
 inline string next_move(int posr, int posc, int dimh, int dimw, vector <string> board) {
+    string res = "EMPTY";
+    if(board[posr][posc] == 'd') res = "CLEAN";
+    else{
+        int minS = 5;
+        float globalThreshold = 0.05f;
+        float localThreshold = 0.5f;
+        Point bot = Point(posc, posr);
+        auto partition = RegionStrategy(localThreshold, globalThreshold, minS);
+        Point p = partition.FindNextPoint(board,bot);
     
-    if(board[posr][posc] == 'd') return "CLEAN";
-    Point bot = Point(posc, posr);
-    float globalThreshold =1.0f;// 0.0000500001f;
-    float localThreshold = 1.0f;//0.5f;
-    NextPointStrategy* sparseStrategy = new DPStrategy();
-    //NextPointStrategy* sparseStrategy = new ConvexStrategy();
-    NextPointStrategy* densStrategy = new HDStrategy();
-    //NextPointStrategy* densStrategy = new ShortestDistanceStrategy();
-   // auto ttt = time(NULL);
-    //auto t1 = std::clock();
-    
-    //std::cout<< "Time = "<<ttt<<std::endl;
-    //srand (cccc);
-    //cccc += 13;
-    auto partition = RegionStrategy(localThreshold, globalThreshold, 
-                                    sparseStrategy, densStrategy,
-                                    board, bot);
-    Point p = partition.FindNextPoint(5,5);
-    if(p.x < 0) return "EMPTY";
-    
-    if(bot.x == p.x){
-        if(bot.y < p.y) return "DOWN";
-        if(bot.y > p.y) return "UP";
+        if(bot.x == p.x){
+            res = "UP";
+            if(bot.y < p.y) res = "DOWN";
+        }
+        if(bot.y == p.y){
+            res = "LEFT";
+            if(bot.x < p.x) return "RIGHT";
+        }
+        if(std::rand() % 2){
+            res = "LEFT";
+            if(bot.x < p.x) return "RIGHT";
+        } else{
+            res = "UP";
+            if(bot.y < p.y) return "DOWN";
+        }
     }
-    if(bot.y == p.y){
-        if(bot.x < p.x) return "RIGHT";
-        if(bot.x > p.x) return "LEFT";
-    }
-    if(std::rand() % 2){
-        if(bot.x < p.x) return "RIGHT";
-        if(bot.x > p.x) return "LEFT";
-    } else{
-        if(bot.y < p.y) return "DOWN";
-        if(bot.y > p.y) return "UP";
-    }
-    
-    return "EMPTY";
+    return res;
 }
