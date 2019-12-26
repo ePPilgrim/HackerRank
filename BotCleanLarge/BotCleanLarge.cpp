@@ -158,6 +158,8 @@ int main()
     board[4] = "--d-d";*/
     
    int ff = 0;
+   srand(1);
+   srand (time(NULL));
     for(auto status = next_move(pos[0], pos[1], dim[0], dim[1], board); status != "EMPTY";){
        
         if(status == "CLEAN"){
@@ -180,6 +182,7 @@ int main()
         }
         
         std::cout<<status<<std::endl;
+        //srand(1);
         status = next_move(pos[0], pos[1], dim[0], dim[1], board);
     } 
     std::cout << "Total number of points = "<< TotalNumberOfDPoint << std::endl;
