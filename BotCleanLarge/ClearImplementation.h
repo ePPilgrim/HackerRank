@@ -4,6 +4,7 @@
 #include <vector>
 #include <algorithm>
 #include <string>
+#include <ctime>
 
 using namespace std;
 
@@ -214,10 +215,11 @@ class RegionStrategy
 
 inline string next_move(int posr, int posc, int dimh, int dimw, vector <string> board) {
     string res = "EMPTY";
+    srand(time(NULL));
     if(board[posr][posc] == 'd') res = "CLEAN";
     else{
         int minS = 5;
-        float globalThreshold = 0.00000005f;
+        float globalThreshold = 10.0f;
         float localThreshold = 0.5f;
         Point bot = Point(posc, posr);
         auto partition = RegionStrategy(localThreshold, globalThreshold, minS);
