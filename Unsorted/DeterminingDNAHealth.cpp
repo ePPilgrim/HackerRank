@@ -117,11 +117,18 @@ class DeterminingDnaHealth
 {
     Tree DnaTree;
     std::vector<int> Weights;
+    std::ifstream* PtrToStream;
 
-    std::istream* getFileStream(std::string filePath){
-        std::ifstream* ptr_fstream = new std::ifstream();
-        ptr_fstream->open(filePath);
-        return ptr_fstream;
+    std::ifstream getStream(std::string filePath=""){
+        PtrToStream = nullptr;
+        if(filePath.empty()){
+            PtrToStream = &std::cin;
+        }else{
+            std::ifstream* ptr_fstream = new std::ifstream();
+            ptr_fstream->open(filePath);
+            PtrToStream = ptr_fstream;
+        }
+        return PtrToStream;
     }
 
     void initialize(std::istream& stream){
@@ -136,15 +143,19 @@ class DeterminingDnaHealth
     }
 
 public:
-    DeterminingDnaHealth()
+    DeterminingDnaHealth(std::string filePath = "")
     {
-        initialize(std::cin);
+        initialize(*getStream(filePath));
     }
-    DeterminingDnaHealth(std::string filePath)
-    {
-        std::ifstream* ptr_fstream = new std::ifstream();
-        ptr_fstream->open(filePath);
-        initialize(*ptr_fstream);
+
+    void FindSolution(){
+        int n, l,r;
+        std::string strand;
+        *PtrToStream>>n;
+        for(int i = 0; i < n; ++ i){
+            *PtrToStream>>l>>r>>strand;
+        }
+
     }
 };
 
