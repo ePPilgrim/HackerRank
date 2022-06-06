@@ -1,4 +1,5 @@
 #include<iostream>
+#include<fstream>
 #include<map>
 #include<vector>
 #include<queue>
@@ -21,15 +22,16 @@ struct Tree{
     char StartSymbol;
     char TerminalSymbol;
     Tree() : StartSymbol('{'), TerminalSymbol('}')
-    {} 
+    {
+        Nodes.reserve(MAX_NUMBER_OF_NODES);
+    } 
 };
 
 class BfsTreeBuilder{
     struct NodeBuildInfo{
         int Depth;
-        int ParentState; 
         char NodeSymbol;
-        NodeBuildInfo( int depth, int parentState, char nodeSymbol) : Depth(depth), ParentState(parentState), NodeSymbol(nodeSymbol)
+        NodeBuildInfo( int depth, char nodeSymbol) : Depth(depth), NodeSymbol(nodeSymbol)
         {}
     };
     std::queue<int> Queue;
@@ -63,22 +65,21 @@ protected:
     void buildTreeStructure(Tree& tree, const std::vector<std::string>& genes)
     {
         Queue.push(0);
-        TreeBuildInfo.push_back(NodeBuildInfo(0, 0, tree.StartSymbol));
+        TreeBuildInfo.push_back(NodeBuildInfo(0, tree.StartSymbol));
         tree.Nodes.push_back(Node(0, 0, genes.size()));
           
         for(;!Queue.empty();Queue.pop()){
             int state = Queue.front();
             if(TreeBuildInfo[state].NodeSymbol == tree.TerminalSymbol) continue;
-            Node& node = tree.Nodes[state];
             int depth = TreeBuildInfo[state].Depth;
-            for(int i = node.WordRange.first; i < node.WordRange.second; ++ i){
-                char ch = (genes[i].length() == depth + 1) ? tree.TerminalSymbol : genes[i][depth];
-                auto it = node.Children.find(ch);
-                if(it != node.Children.end()) tree.Nodes[it->second].WordRange.second ++;
+            for(int i = tree.Nodes[state].WordRange.first; i < tree.Nodes[state].WordRange.second; ++ i){
+                char ch = (genes[i].length() == depth) ? tree.TerminalSymbol : genes[i][depth];
+                auto it = tree.Nodes[state].Children.find(ch);
+                if(it != tree.Nodes[state].Children.end()) tree.Nodes[it->second].WordRange.second ++;
                 else{
                     Queue.push(tree.Nodes.size());
-                    TreeBuildInfo.push_back(NodeBuildInfo(depth + 1, state, ch));
-                    node.Children[ch] = tree.Nodes.size();
+                    TreeBuildInfo.push_back(NodeBuildInfo(depth + 1, ch));
+                    tree.Nodes[state].Children[ch] = tree.Nodes.size();
                     tree.Nodes.push_back(Node(tree.Nodes.size(), i, i + 1));        
                 }    
             }    
@@ -112,31 +113,43 @@ public:
     }
 };
 
+class DeterminingDnaHealth
+{
+    Tree DnaTree;
+    std::vector<int> Weights;
 
+    std::istream* getFileStream(std::string filePath){
+        std::ifstream* ptr_fstream = new std::ifstream();
+        ptr_fstream->open(filePath);
+        return ptr_fstream;
+    }
 
-// class DeterminingDnaHealth
-// {
-//     std::vector<Node> mTree;
-//     std::vector<int> mWeights;
-//     void buildTree(std::vector<string> genes){
-//         std::sort(genes.begin(), genes.end());
-//         std::queue<Node> queue;
-//         queue.push(new Node())
+    void initialize(std::istream& stream){
+        int n;
+        stream >> n;
+        std::vector<std::string> genes(n);
+        Weights.resize(n);
+        for(int i = 0; i < n; stream >> genes[i++]);
+        for(int i = 0; i < n; stream >> Weights[i++]);
+        BfsTreeBuilder builder;
+        DnaTree = builder.BuildTree(genes);
+    }
 
-        
-
-
-//     }
-//     void buildFailureFunction();
-
-// public:
-//     DeterminingDnaHealth()
-//     {}
-// };
+public:
+    DeterminingDnaHealth()
+    {
+        initialize(std::cin);
+    }
+    DeterminingDnaHealth(std::string filePath)
+    {
+        std::ifstream* ptr_fstream = new std::ifstream();
+        ptr_fstream->open(filePath);
+        initialize(*ptr_fstream);
+    }
+};
 
 int main()
 {
-
-   // auto ff = new DeterminingDnaHealth();
+    DeterminingDnaHealth determiningDnaHealth("input.txt");
     return 0;
 };
