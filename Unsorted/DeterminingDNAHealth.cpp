@@ -1,49 +1,40 @@
 #include <bits/stdc++.h>
+#include <chrono>
 
 using namespace std;
 typedef unsigned long long Long;
 const int MAX_NUMBER_OF_NODES = 4000000; 
+const char TERMINAL = char(int('z') + 1);
 
 struct Node{
     int LinkedNode;
     pair<int,int> Span;
-    map<char,int> Children; 
+    vector<int> Children;
     Node(int linkedNode, int fromIndex, int toIndex) : LinkedNode(linkedNode), Span(fromIndex, toIndex)
-    {}
+    {
+        Children.resize(int('z') - int('a') + 2, -1);
+    }
+    int GetChildState(char ch) const {
+        return Children[size_t(ch)-size_t('a')];
+    }
+    void SetChildState(char ch, int state){
+        Children[size_t(ch)-size_t('a')] = state;
+    }
 };
 
 struct Tree{
     vector<Node> Nodes;
     vector<int> Permutation;
-    char StartSymbol;
     char TerminalSymbol;
-    Tree() : StartSymbol('{'), TerminalSymbol('}')
-    {
-        Nodes.reserve(MAX_NUMBER_OF_NODES);
-    } 
+    Tree(char terminalSymbol = TERMINAL) : TerminalSymbol(terminalSymbol) 
+    {Nodes.reserve(MAX_NUMBER_OF_NODES);}
 };
 
 class BfsTreeBuilder{
-    struct NodeBuildInfo{
-        int Depth;
-        char NodeSymbol;
-        NodeBuildInfo( int depth, char nodeSymbol) : Depth(depth), NodeSymbol(nodeSymbol)
-        {}
-    };
     queue<int> Queue;
-    vector<NodeBuildInfo> TreeBuildInfo;
 
     void releaseResources(){
         Queue = move(queue<int>());
-        TreeBuildInfo.clear();
-        TreeBuildInfo.reserve(MAX_NUMBER_OF_NODES);
-    }
-
-    void touchChildrenWithPrefixPosition(Tree& tree, int state, int prefixState){
-        prefixState = (prefixState < 0) ? 0 : prefixState;
-        for(auto it = tree.Nodes[state].Children.begin(); it != tree.Nodes[state].Children.end(); Queue.push(it++->second)){
-            tree.Nodes[it->second].LinkedNode = prefixState;
-        }
     }
     
 protected:
@@ -51,7 +42,7 @@ protected:
     {
         vector<int> permutation(genes.size());
         generate(permutation.begin(), permutation.end(), [n = 0]() mutable { return n++; });
-        sort(permutation.begin(), permutation.end(), [&](int i, int j) {return genes[i] < genes[j];});
+        sort(permutation.begin(), permutation.end(), [&](int i, int j) { return (genes[i] == genes[j]) ? i < j : genes[i] < genes[j];});
         vector<string> permutedGenes;
         permutedGenes.reserve(genes.size());
         tree.Permutation.resize(genes.size());
@@ -64,58 +55,94 @@ protected:
 
     void buildTreeStructure(Tree& tree, const vector<string>& genes)
     {
+        queue<int> depthQueue;
         Queue.push(0);
-        TreeBuildInfo.push_back(NodeBuildInfo(0, tree.StartSymbol));
+        depthQueue.push(0);
         tree.Nodes.push_back(Node(0, 0, genes.size()));  
-        for(;!Queue.empty();Queue.pop()){
+        for(;!Queue.empty();Queue.pop(), depthQueue.pop()){
             int state = Queue.front();
-            if(TreeBuildInfo[state].NodeSymbol == tree.TerminalSymbol) continue;
-            int depth = TreeBuildInfo[state].Depth;
+            int depth = depthQueue.front();
             for(int i = tree.Nodes[state].Span.first; i < tree.Nodes[state].Span.second; ++ i){
                 char ch = (genes[i].length() == depth) ? tree.TerminalSymbol : genes[i][depth];
-                auto it = tree.Nodes[state].Children.find(ch);
-                if(it != tree.Nodes[state].Children.end()) tree.Nodes[it->second].Span.second ++;
-                else{
+                int child_state = tree.Nodes[state].GetChildState(ch);
+                if(child_state >= 0) {
+                    tree.Nodes[child_state].Span.second ++;
+                    continue;
+                }
+                if(ch != tree.TerminalSymbol) {
                     Queue.push(tree.Nodes.size());
-                    TreeBuildInfo.push_back(NodeBuildInfo(depth + 1, ch));
-                    tree.Nodes[state].Children[ch] = tree.Nodes.size();
-                    tree.Nodes.push_back(Node(tree.Nodes.size(), i, i + 1));        
-                }    
+                    depthQueue.push(depth + 1);
+                }
+                tree.Nodes[state].SetChildState(ch, tree.Nodes.size());
+                tree.Nodes.push_back(Node(tree.Nodes.size(), i, i + 1));        
             }    
         }
     } 
 
      void buildFailureFunction(Tree& tree){
         tree.Nodes[0].LinkedNode = -1;
-        touchChildrenWithPrefixPosition(tree, 0, 0);
+        Queue.push(0);
         for(;!Queue.empty(); Queue.pop()){
             int state = Queue.front();
-            int prefixState = tree.Nodes[state].LinkedNode;
-            for(;prefixState >= 0;prefixState = tree.Nodes[prefixState].LinkedNode){
-                auto it = tree.Nodes[prefixState].Children.find(TreeBuildInfo[state].NodeSymbol);
-                if(it != tree.Nodes[prefixState].Children.end()){
-                    prefixState = it->second;
-                    break;
-                }  
+            for(int i = 0; i < int(TERMINAL)-int('a'); ++ i ){
+                int child_state = tree.Nodes[state].Children[i];
+                if(child_state < 0) continue;
+                Queue.push(child_state);
+                char ch = char(int('a') + i);
+                int prefix = tree.Nodes[state].LinkedNode;
+                for(;prefix >= 0 && tree.Nodes[prefix].GetChildState(ch) < 0;prefix = tree.Nodes[prefix].LinkedNode);
+                tree.Nodes[child_state].LinkedNode = (prefix < 0) ? 0 : tree.Nodes[prefix].GetChildState(ch);
             }
-            touchChildrenWithPrefixPosition(tree, state, prefixState);
         }
     } 
 public:
     Tree BuildTree(vector<string>& genes){
-        Tree tree;
+        Tree tree(TERMINAL);
         buildPermutation(tree, genes);
         buildTreeStructure(tree, genes);
         buildFailureFunction(tree);
         releaseResources();
         return move(tree);
-    }
+    }  
+};
+
+class Diagnostic{
+       vector<string> Paths;
+        void fillPaths(int state, string prefix, const vector<Node>& nodes){
+            Paths[state] = prefix;
+            for(int i = 0; i < int(TERMINAL) - int('a'); ++ i){
+                int child_state = nodes[state].Children[i];
+                if(child_state < 0) continue;
+                fillPaths(child_state, prefix+char(int('a') + i),nodes);
+            }
+        }
+    
+        void getInfo(int state, const vector<Node>& nodes){
+            cout << "(" << Paths[state] << ")" << "   ";
+            if(nodes[state].GetChildState(TERMINAL) >= 0) cout<<"(+)";
+            else cout << "(-)";
+            cout<<"   ";
+            if(nodes[state].LinkedNode >= 0) cout << "(" << Paths[nodes[state].LinkedNode]<< ")";
+            cout << endl;
+            for(int i = 0; i < int(TERMINAL) - int('a'); ++ i){
+                int child_state = nodes[state].Children[i];
+                if(child_state < 0) continue;
+                getInfo(child_state, nodes);
+            }
+        }
+    public:
+    void DoDiagnostic(const vector<Node>& nodes){
+        Paths.resize(nodes.size());
+        fillPaths(0,string(),nodes);
+        getInfo(0,nodes);
+    }  
 };
 
 class DeterminingDnaHealth
 {
     Tree DnaTree;
-    vector<int> Weights;
+    vector<Long> AccumulativeWeights;
+    vector<unsigned int> Weights;
     istream* PtrToStream;
 
     istream* getStream(string filePath=""){
@@ -139,20 +166,39 @@ class DeterminingDnaHealth
         DnaTree = builder.BuildTree(genes);
         Weights.resize(n);
         for(int i = 0; i < n; stream >> Weights[DnaTree.Permutation[i++]]);
+        AccumulativeWeights.resize(n, 0);
+        AccumulativeWeights[0] = static_cast<Long>(Weights[0]);
+        for(int i = 1; i < n; ++ i){
+            if(genes[i] == genes[i-1])  AccumulativeWeights[i] = Weights[i] + AccumulativeWeights[i-1];
+            else{
+                AccumulativeWeights[i] = static_cast<Long>(Weights[i]);
+            }
+        }
     }
 
     bool isStrandHealthy(const Node& node, const set<int>& validSet){
-        auto it = validSet.lower_bound(node.Span.first);
-        if(it == validSet.end()) return false;
-        if(*it < node.Span.second) return true;
-        return false;
+        if(*validSet.rbegin() < node.Span.first) return false;
+        if(*validSet.begin() >= node.Span.second) return false;
+        // auto it = validSet.lower_bound(node.Span.first);
+        // if(it == validSet.end()) return false;
+        // if(*it < node.Span.second) return true;
+        return true;
     }
 
-    Long calculateTotalHealth(const Node& node, const set<int>& validSet){
-        if(!isStrandHealthy(node, validSet)) return 0;
-        Long totalHealth = 0;
-        for(auto it = validSet.lower_bound(node.Span.first); it != validSet.lower_bound(node.Span.second); totalHealth += (Long) Weights[*it++]);
-        return totalHealth;
+    Long calculateTotalHealth(int state, const set<int>& validSet){
+        if(state < 0) return 0;
+        if(!isStrandHealthy(DnaTree.Nodes[state], validSet)) return 0;
+        int from = DnaTree.Nodes[state].Span.first;
+        int to = DnaTree.Nodes[state].Span.second;
+        auto it = validSet.lower_bound(from);
+        if(*it >= to) return 0;
+        from = *it;
+        it = validSet.lower_bound(to);
+        to = (it != validSet.end()) ? *--it : *validSet.rbegin();
+        return AccumulativeWeights[to] - AccumulativeWeights[from] + static_cast<Long>(Weights[from]);
+        //Long totalHealth = 
+        //for(auto it = validSet.lower_bound(node.Span.first); it != validSet.lower_bound(node.Span.second); totalHealth += (Long) Weights[*it++]);
+        //return totalHealth;
     }
 
     Long findTotalHealthOfStrand(int left, int right, const string& dnaStrand){
@@ -163,14 +209,12 @@ class DeterminingDnaHealth
         for(int i = 0, state = 0; i < dnaStrand.length(); ++ i){
             Node& node = DnaTree.Nodes[(state < 0) ? 0 : state];
             if(isStrandHealthy(node, validSet)){
-                auto it = node.Children.find(DnaTree.TerminalSymbol);
-                if (it != node.Children.end()) totalHealth += calculateTotalHealth(DnaTree.Nodes[it->second],validSet);
-                it = node.Children.find(dnaStrand[i]);
-                if(it != node.Children.end()){
-                    state = it->second;
-                    continue;
-                }
+            totalHealth += calculateTotalHealth(node.GetChildState(DnaTree.TerminalSymbol),validSet);
+            state = node.GetChildState(dnaStrand[i]);
+            if(state >= 0){
+                continue;
             }
+            
             state = node.LinkedNode;
             i += (state < 0) ? 0 : -1;
         }
@@ -184,25 +228,39 @@ public:
     }
 
     void FindSolution(){
-
+        Long minHealth = numeric_limits<Long>::max();
+        Long maxHealth = numeric_limits<Long>::min();
         int n, l,r;
         *PtrToStream>>n;
         for(int i = 0; i < n; ++ i){
             string dnaStrand;
             *PtrToStream>>l>>r>>dnaStrand;
-            Long res = findTotalHealthOfStrand(l, r, dnaStrand + DnaTree.TerminalSymbol);
+            Long res = findTotalHealthOfStrand(l, r, dnaStrand+'@');
             if(res > maxHealth) maxHealth = res;
             if(res < minHealth) minHealth = res;
-            cout << res << endl;
+            //cout << i <<", " ;
         }
+        cout << endl;
         cout << minHealth <<' '<< maxHealth << endl;
     }
 };
 
 int main()
 {
+    // BfsTreeBuilder dna;
+    // vector<string> genes = {"a", "ab", "bab", "bc", "bca", "c", "caa"};
+    // Tree tree = dna.BuildTree(genes);
+    // Diagnostic obj;
+    // obj.DoDiagnostic(tree.Nodes);
+
+
+    clock_t start, end;
+
+    start = clock();
     DeterminingDnaHealth determiningDnaHealth("input.txt");
     determiningDnaHealth.FindSolution();
+    end = clock();
+    cout << "Time = " <<  ((float) end - start)/CLOCKS_PER_SEC<<endl;
     //0 1970060
     return 0;
 };
