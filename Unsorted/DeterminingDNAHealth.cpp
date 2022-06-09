@@ -3,7 +3,7 @@
 
 using namespace std;
 typedef unsigned long long Long;
-const int MAX_NUMBER_OF_NODES = 4000000;
+const int MAX_NUMBER_OF_NODES = 2000000;
 const int MAX_NUMBER_OF_LETTERS = 26;
 const int MAX_NUMBER_OF_WORDS = 100000;
 
@@ -117,9 +117,9 @@ public:
 class DeterminingDnaHealth
 {
     Tree DnaTree;
-    vector<Long> AccumulativeWeights;
+    vector<int> Weights;
     vector<int> WordHistogram;
-    vector<pair<int,int>> MapToWords;
+    vector<vector<int>> MapToWords;
 
     istream* PtrToStream;
 
@@ -143,28 +143,23 @@ class DeterminingDnaHealth
         for (int i = 0; i < n; stream >> genes[i++]);
         BfsTreeBuilder builder;
         DnaTree = builder.BuildTree(genes);
-        AccumulativeWeights = vector<Long>(n + 1, 0);
-        for (int i = 0; i < n; stream >> AccumulativeWeights[DnaTree.Permutation[i++] + 1]);
-        for (int i = 1; i <= n; ++i) AccumulativeWeights[i] += AccumulativeWeights[i - 1];
-        vector<int> subMap(n);
-        for (int i = 0; i < DnaTree.TerminalNodes.size(); ++i) {
-            for (int j = DnaTree.TerminalNodes[i].first; j < DnaTree.TerminalNodes[i].second; subMap[j++] = i);
-            DnaTree.TerminalNodes[i] = pair<int, int>(numeric_limits<int>::max(), numeric_limits<int>::min());
+        Weights = vector<int>(n, 0);
+        for (int i = 0; i < n; stream >> Weights[i++]);
+        vector<int> pperm(n, 0);
+        for (int i = 0; i < n; ++i) {
+            int index = DnaTree.Permutation[i];
+            pperm[index] = i;
         }
-        MapToWords.resize(n);
-        for (int i = 0; i < n; ++i) 
-            MapToWords[i] = pair<int,int>(subMap[DnaTree.Permutation[i]], DnaTree.Permutation[i]);
+        MapToWords.resize(DnaTree.TerminalNodes.size(), vector<int>());
+        for (int i = 0; i < DnaTree.TerminalNodes.size(); ++i) {
+            for (int j = DnaTree.TerminalNodes[i].first; j < DnaTree.TerminalNodes[i].second; ++j) {
+                MapToWords[i].push_back(pperm[j]);
+            }
+        }
         WordHistogram = vector<int>(DnaTree.TerminalNodes.size(), 0);
     }
 
     Long findTotalHealthOfStrand(int left, int right, const string& dnaStrand) {
-        for (int i = left; i <= right; ++i) {
-            int j = MapToWords[i].first;
-            int val = MapToWords[i].second;
-            if (DnaTree.TerminalNodes[j].first > val) DnaTree.TerminalNodes[j].first = val;
-            if (DnaTree.TerminalNodes[j].second < val) DnaTree.TerminalNodes[j].second = val;
-        }
-
         for (int i = 0, state = 0; i < dnaStrand.size(); ++i) {
             int id = dnaStrand[i] - int('a');
             for (; state >= 0 && DnaTree.Nodes[state].Children[id] < 0;state = DnaTree.Nodes[state].LinkedNode);
@@ -180,15 +175,14 @@ class DeterminingDnaHealth
         
         Long totalHealth = 0;
         for (int i = 0; i < DnaTree.TerminalNodes.size(); ++i) {
-            if((WordHistogram[i] != 0) && (DnaTree.TerminalNodes[i].first <= DnaTree.TerminalNodes[i].second)) {
-                totalHealth += WordHistogram[i] * (AccumulativeWeights[DnaTree.TerminalNodes[i].second + 1] - AccumulativeWeights[DnaTree.TerminalNodes[i].first]);
+            if(WordHistogram[i] != 0) {
+                for (int j = 0; j < MapToWords[i].size(); ++j) {
+                    if ((MapToWords[i][j] > right) || (MapToWords[i][j] < left)) continue;
+                        totalHealth += WordHistogram[i] * (Long)Weights[MapToWords[i][j]];
+                }
             }
         }
-
-        for (int i = 0; i < WordHistogram.size(); ++i) {
-            DnaTree.TerminalNodes[i] = pair<int, int>(numeric_limits<int>::max(), numeric_limits<int>::min());
-            WordHistogram[i] = 0;
-        }
+        memset((void*)WordHistogram.data(), 0, 4 * WordHistogram.size());
         return totalHealth;
     }
 
